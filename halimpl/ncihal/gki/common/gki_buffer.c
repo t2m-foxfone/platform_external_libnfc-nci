@@ -1,4 +1,8 @@
 /******************************************************************************
+* Copyright (c) 2013, The Linux Foundation. All rights reserved.
+* Not a Contribution.
+ ******************************************************************************/
+/******************************************************************************
  *
  *  Copyright (C) 1999-2012 Broadcom Corporation
  *
@@ -437,7 +441,7 @@ void *GKI_getbuf (UINT16 size)
 #if GKI_BUFFER_DEBUG
             LOGD("GKI_getbuf() allocated, %x, %x (%d of %d used) %d", (UINT8*)p_hdr + BUFFER_HDR_SIZE, p_hdr, Q->cur_cnt, Q->total, p_cb->freeq[i].total);
 
-            strncpy(p_hdr->_function, _function_, _GKI_MAX_FUNCTION_NAME_LEN);
+            strlcpy(p_hdr->_function, _function_, _GKI_MAX_FUNCTION_NAME_LEN);
             p_hdr->_function[_GKI_MAX_FUNCTION_NAME_LEN] = '\0';
             p_hdr->_line = _line_;
 #endif
@@ -551,7 +555,7 @@ void *GKI_getpoolbuf (UINT8 pool_id)
 #if GKI_BUFFER_DEBUG
         LOGD("GKI_getpoolbuf() allocated, %x, %x (%d of %d used) %d", (UINT8*)p_hdr + BUFFER_HDR_SIZE, p_hdr, Q->cur_cnt, Q->total, p_cb->freeq[pool_id].total);
 
-        strncpy(p_hdr->_function, _function_, _GKI_MAX_FUNCTION_NAME_LEN);
+        strlcpy(p_hdr->_function, _function_, _GKI_MAX_FUNCTION_NAME_LEN);
         p_hdr->_function[_GKI_MAX_FUNCTION_NAME_LEN] = '\0';
         p_hdr->_line = _line_;
 #endif
@@ -1076,9 +1080,21 @@ void *GKI_getnext (void *p_buf)
 *******************************************************************************/
 BOOLEAN GKI_queue_is_empty(BUFFER_Q *p_q)
 {
-    return ((BOOLEAN) (p_q->count == 0));
+    BOOLEAN queue_empty;
+    GKI_disable();
+    queue_empty = (p_q->count == 0);
+    GKI_enable();
+    return (BOOLEAN)queue_empty;
 }
 
+UINT16 GKI_queue_length (BUFFER_Q *p_q)
+{
+    UINT16 queue_count;
+    GKI_disable();
+    queue_count = p_q->count;
+    GKI_enable();
+    return (UINT16) queue_count;
+}
 /*******************************************************************************
 **
 ** Function         GKI_find_buf_start
