@@ -1,4 +1,8 @@
 /******************************************************************************
+* Copyright (c) 2013, The Linux Foundation. All rights reserved.
+* Not a Contribution.
+ ******************************************************************************/
+/******************************************************************************
  *
  *  Copyright (C) 1999-2012 Broadcom Corporation
  *
@@ -16,7 +20,10 @@
  *
  ******************************************************************************/
 #include "OverrideLog.h"
-#define LOG_TAG "NfcNciHal"
+#ifdef LOG_TAG
+#undef LOG_TAG
+#endif
+#define LOG_TAG "NfcHal"
 #include "gki.h"
 extern "C"
 {
@@ -69,11 +76,11 @@ void nfc_hal_nv_co_read (UINT8 *p_buf, UINT16 nbytes, UINT8 block)
         ALOGE ("%s: filename too long", __FUNCTION__);
         return;
     }
-    sprintf (filename, "%s%u", fn.c_str(), block);
+    snprintf (filename, 256, "%s%u", fn.c_str(), block);
 
     ALOGD ("%s: buffer len=%u; file=%s", __FUNCTION__, nbytes, filename);
     int fileStream = open (filename, O_RDONLY);
-    if (fileStream >= 0)
+    if (fileStream > 0)
     {
         size_t actualRead = read (fileStream, p_buf, nbytes);
         if (actualRead > 0)
@@ -126,11 +133,11 @@ void nfc_hal_nv_co_write (const UINT8 *p_buf, UINT16 nbytes, UINT8 block)
         ALOGE ("%s: filename too long", __FUNCTION__);
         return;
     }
-    sprintf (filename, "%s%u", fn.c_str(), block);
+    snprintf (filename, 256, "%s%u", fn.c_str(), block);
     ALOGD ("%s: bytes=%u; file=%s", __FUNCTION__, nbytes, filename);
 
     fileStream = open (filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-    if (fileStream >= 0)
+    if (fileStream > 0)
     {
         size_t actualWritten = write (fileStream, p_buf, nbytes);
         ALOGD ("%s: %d bytes written", __FUNCTION__, actualWritten);
@@ -187,30 +194,4 @@ const std::string get_storage_location ()
 *******************************************************************************/
 void delete_hal_non_volatile_store ()
 {
-    static bool firstTime = true;
-    std::string fn = get_storage_location();
-    char filename[256];
-    int stat = 0;
-
-    if (firstTime == false)
-        return;
-    firstTime = false;
-
-    ALOGD ("%s", __FUNCTION__);
-
-    fn.append (filename_prefix);
-    if (fn.length() > 200)
-    {
-        ALOGE ("%s: filename too long", __FUNCTION__);
-        return;
-    }
-
-    sprintf (filename, "%s%u", fn.c_str(), DH_NV_BLOCK);
-    remove (filename);
-    sprintf (filename, "%s%u", fn.c_str(), HC_F3_NV_BLOCK);
-    remove (filename);
-    sprintf (filename, "%s%u", fn.c_str(), HC_F4_NV_BLOCK);
-    remove (filename);
-    sprintf (filename, "%s%u", fn.c_str(), HC_F2_NV_BLOCK);
-    remove (filename);
 }

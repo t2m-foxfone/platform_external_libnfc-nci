@@ -1,4 +1,8 @@
 /******************************************************************************
+* Copyright (c) 2013, The Linux Foundation. All rights reserved.
+* Not a Contribution.
+ ******************************************************************************/
+/******************************************************************************
  *
  *  Copyright (C) 2001-2012 Broadcom Corporation
  *
@@ -20,7 +24,7 @@
 
 /* the maximum number of NFCEE interface supported */
 #ifndef NFC_MAX_EE_INTERFACE
-#define NFC_MAX_EE_INTERFACE        3
+#define NFC_MAX_EE_INTERFACE        4
 #endif
 
 /* the maximum number of NFCEE information supported. */
