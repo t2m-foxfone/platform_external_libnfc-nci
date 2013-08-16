@@ -87,6 +87,9 @@ static void mayDisableSecureElement (StartupConfig& config);
 #define NFA_APP_DEFAULT_I2C_PATCHFILE_NAME  "\0"
 #endif
 
+
+#define FW_2.1
+
 tNFC_POST_RESET_CB nfc_post_reset_cb =
 {
     /* Default Patch & Pre-Patch */
@@ -112,8 +115,6 @@ tNFC_POST_RESET_CB nfc_post_reset_cb =
     TRUE,                           /* debug mode for downloading patchram */
     FALSE                           /* skip downloading patchram after reinit because of patch download failure */
 };
-
-
 /*******************************************************************************
 **
 ** Function         getFileLength
@@ -749,8 +750,14 @@ UINT8 nfc_hal_check_firmware_version(UINT8 *genproprsp,UINT8 resplen,UINT8 *patc
 
     memcpy(patchlengthinfo,(patchdata+TOTAL_LENGTH_OCTETS),PATCH_LENGTH_OCTETS);
     patch_len = getlength(patchlengthinfo,PATCH_LENGTH_OCTETS);
+
+#ifndef FW_2.1
     if(memcmp((genproprsp+FW_VERSION_OFFSET),(patchdata+TOTAL_LENGTH_OCTETS+PATCH_LENGTH_OCTETS + \
                patch_len-FW_VERSION_OCTETS-PATCH_OCTETS),FW_VERSION_OCTETS) == 0)
+#else
+    if(memcmp((genproprsp+FW_VERSION_OFFSET),(patchdata+TOTAL_LENGTH_OCTETS+PATCH_LENGTH_OCTETS + \
+               patch_len),FW_VERSION_OCTETS) == 0)
+#endif
     {
        return TRUE;
     }
@@ -773,6 +780,9 @@ UINT8 nfc_hal_check_signature_fw_ver_2(UINT8 *genproprsp,UINT8 resplen,UINT8 *pa
     UINT32 patch_len = 0,i=0;
     UINT16 public_key_len = 0;
     UINT8 patchlengthinfo[4] = {0},public_key_len_info[2]={0};
+#ifdef FW_2.1
+    UINT8 totallengthinfo[4] = {0},total_len=0;
+#endif
 
     HAL_TRACE_DEBUG2("PATCH Update :%X %X",genproprsp[0],genproprsp[1]);
 
@@ -786,10 +796,18 @@ UINT8 nfc_hal_check_signature_fw_ver_2(UINT8 *genproprsp,UINT8 resplen,UINT8 *pa
 
     public_key_len = getlength(public_key_len_info,PUBLIC_KEY_LENGTH_OCTETS);
 
+
+#ifndef FW_2.1
     /*1 deducted from rsplen to remove length byte*/
     if(memcmp((genproprsp+(resplen-SIGNATURE_LENGTH)),(patchdata+TOTAL_LENGTH_OCTETS+PATCH_LENGTH_OCTETS + \
                patch_len+SIG_ALGORITHM_OCTETS+RESERVED_OCTETS+PUBLIC_KEY_LENGTH_OCTETS+ \
                public_key_len+SIGNATURE_LENGTH_OCTETS-1),SIGNATURE_LENGTH) != 0)
+#else
+     memcpy(totallengthinfo,patchdata,TOTAL_LENGTH_OCTETS);
+     total_len = getlength(totallengthinfo,TOTAL_LENGTH_OCTETS);
+     HAL_TRACE_DEBUG1("PATCH Update :%d",total_len);
+     if(memcmp((genproprsp+(resplen-SIGNATURE_LENGTH)),(patchdata+total_len-SIGNATURE_LENGTH),SIGNATURE_LENGTH) != 0)
+#endif
     {
        return PATCH_NOT_UPDATED;
     }
