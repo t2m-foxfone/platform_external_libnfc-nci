@@ -494,7 +494,7 @@ void   nfc_hal_main_start_quick_timer (TIMER_LIST_ENT *p_tle, UINT16 type, UINT3
 void   nfc_hal_main_stop_quick_timer (TIMER_LIST_ENT *p_tle);
 void   nfc_hal_main_send_error (tHAL_NFC_STATUS status);
 void   nfc_hal_send_nci_msg_to_nfc_task (NFC_HDR * p_msg);
-
+void   check_patch_version(UINT32 *version);
 /* nfc_hal_nci.c */
 BOOLEAN nfc_hal_nci_receive_msg (void);
 BOOLEAN nfc_hal_nci_preproc_rx_nci_msg (NFC_HDR *p_msg);
