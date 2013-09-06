@@ -1004,11 +1004,11 @@ void nfc_hal_dm_proc_msg_during_init (NFC_HDR *p_msg)
     UINT8   chipverstr[NCI_SPD_HEADER_CHIPVER_LEN];
     UINT16  xtal_freq;
     UINT8 len = 0,nvmcmdlen = 0;
-    UINT8 nvmupdatebuff[260]={0},nvmdatabufflen=0;
+    UINT8 nvmupdatebuff[260] = {0}, nvmdatabufflen = 0;
     UINT8 *nvmcmd = NULL;
-    UINT32 patch_update_flag=0,nvm_update_flag=0;
-
-    char patchfilepath[100]={0},prepatchfilepath[100]={0};
+    UINT32 patch_update_flag = 0, nvm_update_flag = 0;
+    UINT32 patch_version = 0;
+    char patchfilepath[100] = {0}, prepatchfilepath[100] = {0};
 
     HAL_TRACE_DEBUG1 ("nfc_hal_dm_proc_msg_during_init(): init state:%d", nfc_hal_cb.dev_cb.initializing_state);
     GetNumValue("PATCH_UPDATE_ENABLE_FLAG", &patch_update_flag, sizeof(patch_update_flag));
@@ -1370,6 +1370,7 @@ void nfc_hal_dm_proc_msg_during_init (NFC_HDR *p_msg)
                             nfc_hal_cb.dev_cb.patch_applied = FALSE;
                             HAL_TRACE_DEBUG0("PATCH Update : Last packet sent.Close connection");
                             nfc_hal_cb.ncit_cb.nci_wait_rsp = NFC_HAL_WAIT_RSP_NONE;
+                            nfc_hal_cb.dev_cb.patch_dnld_conn_close_delay = TRUE;
                             nfc_hal_dm_send_nci_cmd (nfc_hal_dm_core_con_close_cmd, 4, NULL);
                         }
                     }
@@ -1387,8 +1388,12 @@ void nfc_hal_dm_proc_msg_during_init (NFC_HDR *p_msg)
                     {
                         HAL_TRACE_DEBUG0("PATCH Update : Patch data sending dynamic connection closed...Sending prop cmd to check patch signature again");
                     }
-                    NFC_HAL_SET_INIT_STATE (NFC_HAL_INIT_STATE_W4_PATCH_INFO);
-                    nfc_hal_dm_send_nci_cmd (nfc_hal_dm_QC_prop_cmd_patchinfo, 4, NULL);
+                 check_patch_version(&patch_version);
+                 if (patch_version == 20)
+                 {
+                     NFC_HAL_SET_INIT_STATE (NFC_HAL_INIT_STATE_W4_PATCH_INFO);
+                     nfc_hal_dm_send_nci_cmd (nfc_hal_dm_QC_prop_cmd_patchinfo, 4, NULL);
+                 }
                 }
             }
         }
