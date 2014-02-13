@@ -2358,7 +2358,7 @@ static void rw_t2t_update_lock_attributes (void)
                 bytes_covered = 0;
                 while (bytes_covered < bytes_locked_per_lock_bit)
                 {
-                    if (p_t2t->lockbyte[num_dyn_lock_bytes].lock_byte & rw_t2t_mask_bits[xx])
+                    if ((p_t2t->lockbyte[num_dyn_lock_bytes].lock_byte & rw_t2t_mask_bits[xx]) && (block_count < RW_T2T_SEGMENT_SIZE))
                     {
                         /* If the bit is set then it is locked */
                         p_t2t->lock_attr[block_count] |= 0x01 << bits_covered;

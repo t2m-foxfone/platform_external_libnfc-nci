@@ -15,8 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 /******************************************************************************
  *
  *  This file contains the action functions for device manager state
@@ -58,6 +75,7 @@ static tNFA_STATUS nfa_dm_start_polling (void);
 static BOOLEAN nfa_dm_deactivate_polling (void);
 static void nfa_dm_excl_disc_cback (tNFA_DM_RF_DISC_EVT event, tNFC_DISCOVER *p_data);
 static void nfa_dm_poll_disc_cback (tNFA_DM_RF_DISC_EVT event, tNFC_DISCOVER *p_data);
+extern unsigned char appl_dta_mode_flag;
 
 
 /*******************************************************************************
@@ -360,6 +378,12 @@ static void nfa_dm_nfc_response_cback (tNFC_RESPONSE_EVT event, tNFC_RESPONSE *p
         break;
 
     case NFC_GEN_ERROR_REVT:                     /* generic error command or notification */
+        if (p_data->status == 0xE4) //STATUS_EMVCO_PCD_COLLISION
+        {
+            dm_cback_data.status = p_data->status;
+            (*nfa_dm_cb.p_dm_cback) (NFA_DM_EMVCO_PCD_COLLISION_EVT, &dm_cback_data);
+        }
+
         break;
 
     case NFC_NFCC_RESTART_REVT:                  /* NFCC has been re-initialized */
@@ -833,6 +857,28 @@ BOOLEAN nfa_dm_act_send_vsc(tNFA_DM_MSG *p_data)
     p_cmd->offset   = sizeof (tNFA_DM_API_SEND_VSC) - BT_HDR_SIZE;
     p_cmd->len      = p_data->send_vsc.cmd_params_len;
     NFC_SendVsCommand (p_data->send_vsc.oid, p_cmd, p_data->send_vsc.p_cback);
+
+    /* Most dm action functions return TRUE, so nfa-sys frees the GKI buffer carrying the message,
+     * This action function re-use the GKI buffer to send the VSC, so the GKI buffer can not be freed by nfa-sys */
+    return (FALSE);
+}
+
+/*******************************************************************************
+**
+** Function         nfa_dm_act_send_nxp
+**
+** Description      Send the NXP NCI command to the NCI command queue
+**
+** Returns          FALSE (message buffer is NOT freed by caller)
+**
+*******************************************************************************/
+BOOLEAN nfa_dm_act_send_nxp(tNFA_DM_MSG *p_data)
+{
+    BT_HDR  *p_cmd = (BT_HDR *)p_data;
+
+    p_cmd->offset   = sizeof (tNFA_DM_API_SEND_VSC) - BT_HDR_SIZE;
+    p_cmd->len      = p_data->send_vsc.cmd_params_len;
+    NFC_SendNxpNciCommand (p_cmd, p_data->send_vsc.p_cback);
 
     /* Most dm action functions return TRUE, so nfa-sys frees the GKI buffer carrying the message,
      * This action function re-use the GKI buffer to send the VSC, so the GKI buffer can not be freed by nfa-sys */
@@ -1488,14 +1534,26 @@ static void nfa_dm_poll_disc_cback (tNFA_DM_RF_DISC_EVT event, tNFC_DISCOVER *p_
             if (  (nfa_dm_cb.disc_cb.activated_protocol     == NFC_PROTOCOL_NFC_DEP)
                 &&(nfa_dm_cb.disc_cb.activated_rf_interface == NFC_INTERFACE_NFC_DEP)  )
             {
-                /* activate LLCP */
-                nfa_p2p_activate_llcp (p_data);
+                if (appl_dta_mode_flag == 1)
+                {
+                    /* Open raw channel in case of p2p for DTA testing */
+                    NFC_SetStaticRfCback (nfa_dm_act_data_cback);
+                    nfa_dm_notify_activation_status (NFA_STATUS_OK, NULL);
+
+                }
+                else
+                {
+                    /* activate LLCP */
+                    nfa_p2p_activate_llcp (p_data);
+                }
             }
             else if (  (nfa_dm_cb.disc_cb.activated_protocol  == NFC_PROTOCOL_T1T)
                      ||(nfa_dm_cb.disc_cb.activated_protocol  == NFC_PROTOCOL_T2T)
                      ||(nfa_dm_cb.disc_cb.activated_protocol  == NFC_PROTOCOL_T3T)
                      ||(  (nfa_dm_cb.disc_cb.activated_protocol == NFC_PROTOCOL_ISO_DEP)
                         &&(nfa_dm_cb.disc_cb.activated_rf_interface == NFC_INTERFACE_ISO_DEP)  )
+                     ||(  (nfa_dm_cb.disc_cb.activated_protocol == NFC_PROTOCOL_MIFARE)
+                        &&(nfa_dm_cb.disc_cb.activated_rf_interface == NFC_INTERFACE_MIFARE)  )
                      ||(nfa_dm_cb.disc_cb.activated_protocol  == NFA_PROTOCOL_ISO15693)  )
             {
                 /* Notify NFA tag sub-system */
@@ -1618,8 +1676,18 @@ void nfa_dm_notify_activation_status (tNFA_STATUS status, tNFA_TAG_PARAMS *p_par
         /* get length of NFCID and location */
         if (p_tech_params->mode == NFC_DISCOVERY_TYPE_POLL_A)
         {
-            nfcid_len = p_tech_params->param.pa.nfcid1_len;
-            p_nfcid   = p_tech_params->param.pa.nfcid1;
+            if(p_tech_params->param.pa.nfcid1_len == 0)
+            {
+                nfcid_len = sizeof(p_params->t1t.uid);
+                p_nfcid   = p_params->t1t.uid;
+                evt_data.activated.activate_ntf.rf_tech_param.param.pa.nfcid1_len = nfcid_len;
+                memcpy (evt_data.activated.activate_ntf.rf_tech_param.param.pa.nfcid1,p_nfcid,nfcid_len);
+            }
+            else
+            {
+                nfcid_len = p_tech_params->param.pa.nfcid1_len;
+                p_nfcid   = p_tech_params->param.pa.nfcid1;
+            }
         }
         else if (p_tech_params->mode == NFC_DISCOVERY_TYPE_POLL_B)
         {

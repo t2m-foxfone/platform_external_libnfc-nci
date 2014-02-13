@@ -15,7 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 
 /******************************************************************************
  *
@@ -83,6 +101,9 @@ const UINT8 nfa_ee_proto_list[NFA_EE_NUM_PROTO] =
 
 static void nfa_ee_report_discover_req_evt(void);
 static void nfa_ee_build_discover_req_evt (tNFA_EE_DISCOVER_REQ *p_evt_data);
+
+UINT8 NFA_REMOVE_ALL_AID[] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+
 /*******************************************************************************
 **
 ** Function         nfa_ee_conn_cback
@@ -555,6 +576,33 @@ void nfa_ee_api_remove_aid(tNFA_EE_MSG *p_data)
         nfa_ee_start_timer();
         /* report NFA_EE_REMOVE_AID_EVT to the callback associated the NFCEE */
         p_cback = p_cb->p_ee_cback;
+    }
+    /*Clear All AIDs*/
+    else if(0 == memcmp(NFA_REMOVE_ALL_AID,p_data->rm_aid.p_aid,p_data->rm_aid.aid_len))
+    {
+        UINT32  xx;
+        tNFA_EE_ECB *p_cb = nfa_ee_cb.ecb;
+        for (xx = 0; xx < NFA_EE_MAX_EE_SUPPORTED; xx++, p_cb++)
+        {
+            int total_len = nfa_ee_find_total_aid_len(p_cb, 0);
+
+            memset(&p_cb->aid_cfg[0],0x00, total_len);
+            memset(&p_cb->aid_len[0], 0x00, total_len);
+            memset(&p_cb->aid_pwr_cfg[0], 0x00, total_len);
+            memset(&p_cb->aid_rt_info[0], 0x00, total_len);
+            p_cb->aid_entries = 0;
+            nfa_ee_cb.ee_cfged      |= nfa_ee_ecb_to_mask(p_cb);
+        }
+
+        tNFA_EE_ECB *p_ecb = &nfa_ee_cb.ecb[NFA_EE_CB_4_DH];
+        int total_len = nfa_ee_find_total_aid_len(p_ecb, 0);
+
+        memset(&p_ecb->aid_cfg[0],0x00, total_len);
+        memset(&p_ecb->aid_len[0], 0x00, total_len);
+        memset(&p_ecb->aid_pwr_cfg[0], 0x00, total_len);
+        memset(&p_ecb->aid_rt_info[0], 0x00, total_len);
+        p_ecb->aid_entries = 0;
+        nfa_ee_cb.ee_cfged      |= nfa_ee_ecb_to_mask(p_ecb);
     }
     else
     {
@@ -1136,12 +1184,18 @@ static void nfa_ee_build_discover_req_evt (tNFA_EE_DISCOVER_REQ *p_evt_data)
         p_info->lb_protocol     = p_cb->lb_protocol;
         p_info->lf_protocol     = p_cb->lf_protocol;
         p_info->lbp_protocol    = p_cb->lbp_protocol;
+        // code to handle and store Reader type(A/B) requested for Reader over SWP.
+        /*Reader over SWP*/
+        p_info->pa_protocol    = p_cb->pa_protocol;
+        p_info->pb_protocol    = p_cb->pb_protocol;
+
         p_evt_data->num_ee++;
         p_info++;
-
-        NFA_TRACE_DEBUG6 ("[%d] ee_handle:0x%x, listen protocol A:%d, B:%d, F:%d, BP:%d",
+        NFA_TRACE_DEBUG6 ("[%d] ee_handle:0x%x, listen protocol A:%d, B:%d, F:%d, BP:%d,",
                           p_evt_data->num_ee, p_cb->nfcee_id,
                           p_cb->la_protocol, p_cb->lb_protocol, p_cb->lf_protocol, p_cb->lbp_protocol);
+        NFA_TRACE_DEBUG4 ("[%d] ee_handle:0x%x, poll protocol PA:%d, PB:%d",
+                          p_evt_data->num_ee, p_cb->nfcee_id, p_cb->pa_protocol, p_cb->pb_protocol);
     }
 
     p_evt_data->status     = NFA_STATUS_OK;
@@ -1425,60 +1479,67 @@ void nfa_ee_nci_disc_req_ntf(tNFA_EE_MSG *p_data)
         p_cb->ecb_flags |= NFA_EE_ECB_FLAGS_DISC_REQ;
         if (p_cbk->info[xx].op == NFC_EE_DISC_OP_ADD)
         {
-            if (p_cbk->info[xx].info.req_info.tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_A)
+            if (p_cbk->info[xx].tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_A)
             {
-                p_cb->la_protocol = p_cbk->info[xx].info.req_info.protocol;
-                /*TODO: Remove below line (once nfcee app is ready) and se_prot_flag from EE Cb */
-                nfa_ee_cb.se_prot_flag |= 0x01;
+                p_cb->la_protocol = p_cbk->info[xx].protocol;
             }
-            else if (p_cbk->info[xx].info.req_info.tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_B)
+            else if (p_cbk->info[xx].tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_B)
             {
-                p_cb->lb_protocol = p_cbk->info[xx].info.req_info.protocol;
-                /*TODO: Remove below line (once nfcee app is ready) and se_prot_flag from EE Cb */
-                nfa_ee_cb.se_prot_flag |= 0x02;
+                p_cb->lb_protocol = p_cbk->info[xx].protocol;
             }
-            else if (p_cbk->info[xx].info.req_info.tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_F)
+            else if (p_cbk->info[xx].tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_F)
             {
-                p_cb->lf_protocol = p_cbk->info[xx].info.req_info.protocol;
-                /*TODO: Remove below line (once nfcee app is ready) and se_prot_flag from EE Cb */
-                nfa_ee_cb.se_prot_flag |= 0x04;
+                p_cb->lf_protocol = p_cbk->info[xx].protocol;
             }
-            else if (p_cbk->info[xx].info.req_info.tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_B_PRIME)
+            else if (p_cbk->info[xx].tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_B_PRIME)
             {
-                p_cb->lbp_protocol = p_cbk->info[xx].info.req_info.protocol;
-                /*TODO: Remove below line (once nfcee app is ready) and se_prot_flag from EE Cb */
-                nfa_ee_cb.se_prot_flag |= 0x08;
+                p_cb->lbp_protocol = p_cbk->info[xx].protocol;
             }
+            //code to handle and store Reader type(A/B) requested for Reader over SWP.
+            /*Reader over SWP*/
+            else if (p_cbk->info[xx].tech_n_mode == NFC_DISCOVERY_TYPE_POLL_A)
+            {
+                p_cb->pa_protocol = p_cbk->info[xx].protocol;
+            }
+            else if (p_cbk->info[xx].tech_n_mode == NFC_DISCOVERY_TYPE_POLL_B)
+            {
+                p_cb->pb_protocol = p_cbk->info[xx].protocol;
+            }
+
+
+            NFA_TRACE_DEBUG6 ("nfcee_id=0x%x ee_status=0x%x ecb_flags=0x%x la_protocol=0x%x la_protocol=0x%x la_protocol=0x%x",
+                p_cb->nfcee_id, p_cb->ee_status, p_cb->ecb_flags,
+                p_cb->la_protocol, p_cb->lb_protocol, p_cb->lf_protocol);
         }
-        else if (p_cbk->info[xx].op == NFC_EE_DISC_OP_REMOVE)
+        else
         {
-            if (p_cbk->info[xx].info.req_info.tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_A)
+            if (p_cbk->info[xx].tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_A)
             {
                 p_cb->la_protocol = 0;
-                p_cb->se_sak      = 0;
             }
-            else if (p_cbk->info[xx].info.req_info.tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_B)
+            else if (p_cbk->info[xx].tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_B)
             {
                 p_cb->lb_protocol = 0;
             }
-            else if (p_cbk->info[xx].info.req_info.tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_F)
+            else if (p_cbk->info[xx].tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_F)
             {
                 p_cb->lf_protocol = 0;
             }
-            else if (p_cbk->info[xx].info.req_info.tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_B_PRIME)
+            else if (p_cbk->info[xx].tech_n_mode == NFC_DISCOVERY_TYPE_LISTEN_B_PRIME)
             {
                 p_cb->lbp_protocol = 0;
             }
+            //code to handle and store Reader type(A/B) requested for Reader over SWP.
+            /*Reader over SWP*/
+            else if (p_cbk->info[xx].tech_n_mode == NFC_DISCOVERY_TYPE_POLL_A)
+            {
+                p_cb->pa_protocol = 0xFF;
+            }
+            else if (p_cbk->info[xx].tech_n_mode == NFC_DISCOVERY_TYPE_POLL_B)
+            {
+                p_cb->pb_protocol= 0xFF;
+            }
         }
-        else if (p_cbk->info[xx].op == NFC_EE_DISC_OP_SAK_INFO)
-        {
-            p_cb->se_sak = p_cbk->info[xx].info.sak_info.sak;
-        }
-
-        NFA_TRACE_DEBUG3 ("nfcee_id=0x%x ee_status=0x%x ecb_flags=0x%x",
-                           p_cb->nfcee_id, p_cb->ee_status, p_cb->ecb_flags);
-        NFA_TRACE_DEBUG4 ("              la_protocol=0x%x lb_protocol=0x%x lf_protocol=0x%x se_sak=0x%x",
-                           p_cb->la_protocol, p_cb->lb_protocol, p_cb->lf_protocol, p_cb->se_sak);
     }
 
 
@@ -1503,6 +1564,13 @@ BOOLEAN nfa_ee_is_active (tNFA_HANDLE nfcee_id)
     int     xx;
     tNFA_EE_ECB  *p_cb = nfa_ee_cb.ecb;
 
+    //Added case for NFCEE_DH.
+    if(nfcee_id == NFA_EE_HANDLE_DH)
+    {
+        is_active = TRUE;
+        goto TheEnd;
+    }
+
     if ((NFA_HANDLE_GROUP_MASK & nfcee_id) == NFA_HANDLE_GROUP_EE)
         nfcee_id    &= NFA_HANDLE_MASK;
 
@@ -1518,6 +1586,7 @@ BOOLEAN nfa_ee_is_active (tNFA_HANDLE nfcee_id)
             break;
         }
     }
+TheEnd:
     return is_active;
 }
 

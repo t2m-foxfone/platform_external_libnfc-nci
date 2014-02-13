@@ -1,7 +1,3 @@
-/****************************************************************************/
-/*Copyright (c) 2013, The Linux Foundation. All rights reserved.*/
-/*Modifications to pre-existing Apache v2.0 licensed code are not a Contribution*/
-/****************************************************************************/
 /*****************************************************************************/
 /*                                                                           */
 /*  Name:          nfca_version.c                                             */

@@ -1,8 +1,4 @@
 /******************************************************************************
-* Copyright (c) 2013, The Linux Foundation. All rights reserved.
-* Not a Contribution.
- ******************************************************************************/
-/******************************************************************************
  *
  *  Copyright (C) 2009-2013 Broadcom Corporation
  *
@@ -55,18 +51,16 @@ typedef UINT8 tNFC_HAL_XTAL_INDEX;
 
 typedef struct
 {
-    UINT32                  m_hw_id;
+    UINT32                  brcm_hw_id;
     UINT16                  xtal_freq;
     UINT8                   xtal_index;
 } tNFC_HAL_DEV_INIT_XTAL_CFG;
 
 #define NFC_HAL_DEV_INIT_MAX_XTAL_CFG       5
-typedef UINT8 tNFC_HAL_DEV_INIT_FLAGS;
 
 typedef struct
 {
     UINT8                       num_xtal_cfg;
-    tNFC_HAL_DEV_INIT_FLAGS     flags;
     tNFC_HAL_DEV_INIT_XTAL_CFG  xtal_cfg[NFC_HAL_DEV_INIT_MAX_XTAL_CFG];
 } tNFC_HAL_DEV_INIT_CFG;
 

@@ -217,11 +217,28 @@ tNFA_STATUS NFA_GetConfig (UINT8 num_ids,
                            tNFA_PMID *p_param_ids)
 {
     tNFA_DM_API_GET_CONFIG *p_msg;
+    UINT8 bytes;
+    UINT8 propConfigCnt;
 
     NFA_TRACE_API1 ("NFA_GetConfig (): num_ids: %i", num_ids);
+    //NXP_EXTN code added to handle propritory config IDs
+    UINT32 idx = 0;
+    UINT8 *params =  p_param_ids;
+    propConfigCnt=0;
 
+    for(idx=0; idx<num_ids; idx++)
+    {
+        if(*params == 0xA0)
+        {
+            params++;
+            propConfigCnt++;
+        }
+        params++;
+    }
 
-    if ((p_msg = (tNFA_DM_API_GET_CONFIG *) GKI_getbuf ((UINT16) (sizeof (tNFA_DM_API_GET_CONFIG) + num_ids))) != NULL)
+    bytes = (num_ids - propConfigCnt) + (propConfigCnt<<1);
+
+    if ((p_msg = (tNFA_DM_API_GET_CONFIG *) GKI_getbuf ((UINT16) (sizeof (tNFA_DM_API_GET_CONFIG) + bytes))) != NULL)
     {
         p_msg->hdr.event = NFA_DM_API_GET_CONFIG_EVT;
 
@@ -229,7 +246,7 @@ tNFA_STATUS NFA_GetConfig (UINT8 num_ids,
         p_msg->p_pmids = (tNFA_PMID *) (p_msg+1);
 
         /* Copy the param IDs */
-        memcpy (p_msg->p_pmids, p_param_ids, num_ids);
+        memcpy (p_msg->p_pmids, p_param_ids, bytes);
 
         nfa_sys_sendmsg (p_msg);
 
@@ -1018,6 +1035,52 @@ tNFA_STATUS NFA_SendVsCommand (UINT8            oid,
     {
         p_msg->hdr.event        = NFA_DM_API_SEND_VSC_EVT;
         p_msg->oid              = oid;
+        p_msg->p_cback          = p_cback;
+        if (cmd_params_len && p_cmd_params)
+        {
+            p_msg->cmd_params_len   = cmd_params_len;
+            p_msg->p_cmd_params     = (UINT8 *)(p_msg + 1);
+            memcpy (p_msg->p_cmd_params, p_cmd_params, cmd_params_len);
+        }
+        else
+        {
+            p_msg->cmd_params_len   = 0;
+            p_msg->p_cmd_params     = NULL;
+        }
+
+        nfa_sys_sendmsg (p_msg);
+
+        return (NFA_STATUS_OK);
+    }
+
+    return (NFA_STATUS_FAILED);
+}
+
+/*******************************************************************************
+**
+** Function         NFA_SendNxpNciCommand
+**
+** Description      This function is called to send an NXP NCI Vendor Specific
+**                  command to NFCC.
+**
+**                  cmd_params_len  - The command parameter len
+**                  p_cmd_params    - The command parameter
+**                  p_cback         - The callback function to receive the command
+**
+** Returns          NFA_STATUS_OK if successfully initiated
+**                  NFA_STATUS_FAILED otherwise
+**
+*******************************************************************************/
+tNFA_STATUS NFA_SendNxpNciCommand (UINT8            cmd_params_len,
+                                   UINT8            *p_cmd_params,
+                                   tNFA_VSC_CBACK    *p_cback)
+{
+    tNFA_DM_API_SEND_VSC *p_msg;
+    UINT16  size = sizeof(tNFA_DM_API_SEND_VSC) + cmd_params_len;
+
+    if ((p_msg = (tNFA_DM_API_SEND_VSC *) GKI_getbuf (size)) != NULL)
+    {
+        p_msg->hdr.event        = NFA_DM_API_SEND_NXP_EVT;
         p_msg->p_cback          = p_cback;
         if (cmd_params_len && p_cmd_params)
         {

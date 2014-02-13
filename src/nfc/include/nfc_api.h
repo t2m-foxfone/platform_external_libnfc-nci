@@ -15,7 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 
 /******************************************************************************
  *
@@ -58,7 +76,8 @@
 
 /* 0xE0 ~0xFF are proprietary status codes */
 #define NFC_STATUS_CMD_STARTED          0xE3/* Command started successfully                     */
-#define NFC_STATUS_HW_TIMEOUT           0xE4/* NFCC Timeout in responding to an NCI command     */
+#define NFC_STATUS_HW_TIMEOUT           0xEC/* changed from 0xE4 (as 0xE4 is defined for STATUS_EMVCO_PCD_COLLISOIN
+                                             NFCC Timeout in responding to an NCI command     */
 #define NFC_STATUS_CONTINUE             0xE5/* More (same) event to follow                      */
 #define NFC_STATUS_REFUSED              0xE6/* API is called to perform illegal function        */
 #define NFC_STATUS_BAD_RESP             0xE7/* Wrong format of R-APDU, CC file or NDEF file     */
@@ -341,6 +360,7 @@ typedef UINT8 tNFC_RF_TECH;
 #define NFC_PROTOCOL_T3T        NCI_PROTOCOL_T3T      /* Type3Tag    - NFC-F            */
 #define NFC_PROTOCOL_ISO_DEP    NCI_PROTOCOL_ISO_DEP  /* Type 4A,4B  - NFC-A or NFC-B   */
 #define NFC_PROTOCOL_NFC_DEP    NCI_PROTOCOL_NFC_DEP  /* NFCDEP/LLCP - NFC-A or NFC-F       */
+#define NFC_PROTOCOL_MIFARE     NCI_PROTOCOL_MIFARE
 #define NFC_PROTOCOL_B_PRIME    NCI_PROTOCOL_B_PRIME
 #define NFC_PROTOCOL_15693      NCI_PROTOCOL_15693
 #define NFC_PROTOCOL_KOVIO      NCI_PROTOCOL_KOVIO
@@ -390,6 +410,7 @@ typedef UINT8 tNFC_BIT_RATE;
 #define NFC_INTERFACE_LLCP_LOW      NCI_INTERFACE_LLCP_LOW
 #define NFC_INTERFACE_LLCP_HIGH     NCI_INTERFACE_LLCP_HIGH
 #define NFC_INTERFACE_VS_T2T_CE     NCI_INTERFACE_VS_T2T_CE
+#define NFC_INTERFACE_MIFARE        NCI_INTERFACE_MIFARE
 typedef tNCI_INTF_TYPE tNFC_INTF_TYPE;
 
 /**********************************************
@@ -458,38 +479,20 @@ typedef struct
 
 #define NFC_EE_DISC_OP_ADD      0
 #define NFC_EE_DISC_OP_REMOVE   1
-#define NFC_EE_DISC_OP_SAK_INFO 0x80
 typedef UINT8 tNFC_EE_DISC_OP;
 typedef struct
 {
+    tNFC_EE_DISC_OP         op;             /* add or remove this entry         */
+    UINT8                   nfcee_id;       /* NFCEE ID                         */
     tNFC_RF_TECH_N_MODE     tech_n_mode;    /* Discovery Technology and Mode    */
     tNFC_PROTOCOL           protocol;       /* NFC protocol                     */
-} tNFC_EE_DISCOVER_REQ_INFO;
-
-typedef struct
-{
-    UINT8                   sak;            /* SAK set by UICC                  */
-} tNFC_EE_DISCOVER_SAK_INFO;
-
-typedef struct
-{
-    tNFC_EE_DISC_OP         op;             /* add/remove/SAK info              */
-    UINT8                   nfcee_id;       /* NFCEE ID                         */
-    union
-    {
-        tNFC_EE_DISCOVER_REQ_INFO req_info;
-        tNFC_EE_DISCOVER_SAK_INFO sak_info;
-    } info;
 } tNFC_EE_DISCOVER_INFO;
 
 #ifndef NFC_MAX_EE_DISC_ENTRIES
 #define NFC_MAX_EE_DISC_ENTRIES     6
 #endif
-#define NFC_EE_DISCOVER_REQ_ENTRY_LEN   5 /* T, L, V(NFCEE ID, TechnMode, Protocol) */
-#define NFC_EE_DISCOVER_REQ_INFO_LEN    3 /* NFCEE ID, TechnMode, Protocol */
-#define NFC_EE_SAK_ENTRY_LEN            4 /* T, L, V(NFCEE ID, SAK) */
-#define NFC_EE_SAK_INFO_LEN             2 /* NFCEE ID, SAK */
-
+#define NFC_EE_DISCOVER_ENTRY_LEN   5 /* T, L, V(NFCEE ID, TechnMode, Protocol) */
+#define NFC_EE_DISCOVER_INFO_LEN    3 /* NFCEE ID, TechnMode, Protocol */
 /* the data type associated with NFC_EE_DISCOVER_REQ_REVT */
 typedef struct
 {

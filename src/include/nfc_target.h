@@ -1,8 +1,4 @@
 /******************************************************************************
-* Copyright (c) 2013, The Linux Foundation. All rights reserved.
-* Not a Contribution.
- ******************************************************************************/
-/******************************************************************************
  *
  *  Copyright (C) 1999-2012 Broadcom Corporation
  *
@@ -19,7 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 #ifndef NFC_TARGET_H
 #define NFC_TARGET_H
 
@@ -38,7 +52,6 @@
 #include "bt_trace.h"
 #endif
 
-#define ANDROID_MODE 0
 
 /* API macros for DLL (needed to export API functions from DLLs) */
 #define NFC_API         EXPORT_API
@@ -237,7 +250,7 @@
 
 /* the maximum number of NFCEE interface supported */
 #ifndef NFC_MAX_EE_INTERFACE
-#define NFC_MAX_EE_INTERFACE        4
+#define NFC_MAX_EE_INTERFACE        3
 #endif
 
 /* the maximum number of NFCEE information supported. */
@@ -428,7 +441,7 @@
 
 /* Response Waiting Time */
 #ifndef LLCP_WAITING_TIME
-#define LLCP_WAITING_TIME           8       /* its scaled value should be less than LTO */
+#define LLCP_WAITING_TIME           7       /* its scaled value should be less than LTO */
 #endif
 
 /* Options Parameters */
@@ -652,7 +665,7 @@
 
 /* Max number of NFCEE supported */
 #ifndef NFA_EE_MAX_EE_SUPPORTED
-#define NFA_EE_MAX_EE_SUPPORTED         4
+#define NFA_EE_MAX_EE_SUPPORTED         4 //Wait for UICC Init complete.
 #endif
 
 /* Maximum number of AID entries per target_handle  */
@@ -662,7 +675,7 @@
 
 /* Maximum number of callback functions can be registered through NFA_EeRegister() */
 #ifndef NFA_EE_MAX_CBACKS
-#define NFA_EE_MAX_CBACKS           (4)
+#define NFA_EE_MAX_CBACKS           (3)
 #endif
 
 #ifndef NFA_DTA_INCLUDED
@@ -680,8 +693,6 @@
 
 
 #endif /* HAL_WRITE */
-
-
 #endif /* NFC_TARGET_H */
 
 

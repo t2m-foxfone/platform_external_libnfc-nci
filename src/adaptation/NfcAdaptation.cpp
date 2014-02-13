@@ -1,14 +1,29 @@
 /******************************************************************************
-* Copyright (c) 2013, The Linux Foundation. All rights reserved.
-* Not a Contribution.
- ******************************************************************************/
-/******************************************************************************
  *
  *  Copyright (C) 1999-2012 Broadcom Corporation
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -29,10 +44,7 @@ extern "C"
 }
 #include "config.h"
 
-#ifdef LOG_TAG
-#undef LOG_TAG
-#endif
-#define LOG_TAG "NfcAdapt"
+#define LOG_TAG "NfcAdaptation"
 
 extern "C" void GKI_shutdown();
 extern void resetConfig();
@@ -48,6 +60,7 @@ ThreadCondVar NfcAdaptation::mHalCloseCompletedEvent;
 
 UINT32 ScrProtocolTraceFlag = SCR_PROTO_TRACE_ALL; //0x017F00;
 UINT8 appl_trace_level = 0xff;
+UINT8 appl_dta_mode_flag = 0x00;
 char bcm_nfc_location[120];
 
 static UINT8 nfa_dm_cfg[sizeof ( tNFA_DM_CFG ) ];
@@ -280,7 +293,11 @@ void NfcAdaptation::InitializeHalDeviceContext ()
     mHalEntryFuncs.control_granted = HalControlGranted;
     mHalEntryFuncs.power_cycle = HalPowerCycle;
 
+#ifdef NFCC_PN547
+    ret = hw_get_module ("nfc_nci_pn547", &hw_module);
+#else
     ret = hw_get_module (NFC_NCI_HARDWARE_MODULE_ID, &hw_module);
+#endif
     if (ret == 0)
     {
         ret = nfc_nci_open (hw_module, &mHalDeviceContext);
@@ -339,7 +356,6 @@ void NfcAdaptation::HalOpen (tHAL_NFC_CBACK *p_hal_cback, tHAL_NFC_DATA_CBACK* p
     ALOGD ("%s", func);
     if (mHalDeviceContext)
     {
-        mHalDeviceContext->common.reserved[0] = ANDROID_MODE;
         mHalCallback = p_hal_cback;
         mHalDataCallback = p_data_cback;
         mHalDeviceContext->open (mHalDeviceContext, HalDeviceContextCallback, HalDeviceContextDataCallback);

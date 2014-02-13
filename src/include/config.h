@@ -1,14 +1,29 @@
 /******************************************************************************
-* Copyright (c) 2013, The Linux Foundation. All rights reserved.
-* Not a Contribution.
- ******************************************************************************/
-/******************************************************************************
  *
  *  Copyright (C) 1999-2012 Broadcom Corporation
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -42,6 +57,7 @@ int GetNumValue(const char* name, void* p_value, unsigned long len);
 #define NAME_USE_RAW_NCI_TRACE          "USE_RAW_NCI_TRACE"
 #define NAME_LOG_TO_FILE                "LOG_TO_FILE"
 #define NAME_LOGCAT_FILTER              "LOGCAT_FILTER"
+#define NAME_APPL_DTA_MODE              "APPL_DTA_MODE"
 #define NAME_LPTD_CFG                   "LPTD_CFG"
 #define NAME_SCREEN_OFF_POWER_STATE     "SCREEN_OFF_POWER_STATE"
 #define NAME_PREINIT_DSP_CFG            "PREINIT_DSP_CFG"
@@ -87,7 +103,7 @@ int GetNumValue(const char* name, void* p_value, unsigned long len);
 #define                     LPTD_PARAM_LEN (40)
 
 // default configuration
-#define default_transport       "/dev/nfc-nci"
+#define default_transport       "/dev/bcm2079x"
 #define default_storage_location "/data/nfc"
 
 struct tUART_CONFIG {

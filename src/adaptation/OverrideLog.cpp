@@ -1,8 +1,4 @@
 /******************************************************************************
-* Copyright (c) 2013, The Linux Foundation. All rights reserved.
-* Not a Contribution.
- ******************************************************************************/
-/******************************************************************************
  *
  *  Copyright (C) 2012 Broadcom Corporation
  *
@@ -19,7 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 /******************************************************************************
  *
  *  Override the ALOGD(), ALOGE(), and other logging macros from
@@ -29,10 +43,7 @@
 #include "OverrideLog.h"
 #include <cutils/properties.h>
 #include "config.h"
-#ifdef LOG_TAG
-#undef LOG_TAG
-#endif
-#define LOG_TAG "NfcJni"
+#define LOG_TAG "BrcmNfcJni"
 
 
 /*******************************************************************************
@@ -74,4 +85,20 @@ unsigned char initializeGlobalAppLogLevel ()
         appl_trace_level = BT_TRACE_LEVEL_DEBUG;
     ALOGD ("%s: level=%u", __FUNCTION__, appl_trace_level);
     return appl_trace_level;
+}
+
+/*******************************************************************************
+**
+** Function:        initializeGlobalDtaMode
+**
+** Description:     Initialize and get global DTA mode from .conf
+**
+** Returns:         none:
+**
+*******************************************************************************/
+void initializeGlobalAppDtaMode ()
+{
+    appl_dta_mode_flag = 0x01;
+    ALOGD("%s: DTA Enabled", __FUNCTION__);
+
 }

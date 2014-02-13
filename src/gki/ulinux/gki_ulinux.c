@@ -1,8 +1,4 @@
 /******************************************************************************
-* Copyright (c) 2013, The Linux Foundation. All rights reserved.
-* Not a Contribution.
- ******************************************************************************/
-/******************************************************************************
  *
  *  Copyright (C) 1999-2012 Broadcom Corporation
  *
@@ -314,7 +310,7 @@ UINT8 GKI_create_task (TASKPTR task_entry, UINT8 task_id, INT8 *taskname, UINT16
 ** Returns          void
 **
 *******************************************************************************/
-#define WAKE_LOCK_ID "nci_nfca"
+#define WAKE_LOCK_ID "brcm_nfca"
 #define PARTIAL_WAKE_LOCK 1
 extern int acquire_wake_lock(int lock, const char* id);
 extern int release_wake_lock(const char* id);
@@ -378,7 +374,7 @@ void GKI_shutdown(void)
 #endif
     if (gki_cb.os.gki_timer_wake_lock_on)
     {
-        GKI_TRACE_0("GKI_shutdown :  release_wake_lock(nci_btld)");
+        GKI_TRACE_0("GKI_shutdown :  release_wake_lock(brcm_btld)");
         release_wake_lock(WAKE_LOCK_ID);
         gki_cb.os.gki_timer_wake_lock_on = 0;
     }
@@ -404,7 +400,7 @@ void gki_system_tick_start_stop_cback(BOOLEAN start)
 {
     tGKI_OS         *p_os = &gki_cb.os;
     volatile int    *p_run_cond = &p_os->no_timer_suspend;
-    volatile int wake_lock_count;
+    volatile static int wake_lock_count;
     if ( FALSE == start )
     {
         /* this can lead to a race condition. however as we only read this variable in the timer loop
@@ -517,7 +513,7 @@ void GKI_run (void *p_task_id)
               NULL) != 0 )
     {
         GKI_TRACE_0("GKI_run: pthread_create failed to create timer_thread!");
-        return;
+        return GKI_FAILURE;
     }
 #else
     GKI_TRACE_2("GKI_run, run_cond(%x)=%d ", p_run_cond, *p_run_cond);
@@ -567,7 +563,7 @@ void GKI_run (void *p_task_id)
     } /* for */
 #endif
     GKI_TRACE_1("%s exit", __func__);
-    return;
+    return(0);
 }
 
 
@@ -912,7 +908,7 @@ INT8 *GKI_map_taskname (UINT8 task_id)
     }
     else
     {
-        return (INT8 *)"BAD";
+        return "BAD";
     }
 }
 
@@ -1237,6 +1233,7 @@ void GKI_sched_lock(void)
 {
     GKI_TRACE_0("GKI_sched_lock");
     GKI_disable ();
+    return;
 }
 
 
