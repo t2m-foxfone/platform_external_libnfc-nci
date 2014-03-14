@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -542,7 +542,7 @@ NFC_API extern tNFC_STATUS RW_T2tSectorSelect (UINT8 sector);
 ** Returns          tNFC_STATUS
 **
 *******************************************************************************/
-NFC_API extern tNFC_STATUS RW_T2tDetectNDef (void);
+NFC_API extern tNFC_STATUS RW_T2tDetectNDef (BOOLEAN skip_dyn_locks);
 
 /*******************************************************************************
 **

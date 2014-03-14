@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013 NXP Semiconductors
+ * Copyright (C) 2012-2014 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@
 /******************* Global variables *****************************************/
 extern phNxpNciHal_Control_t nxpncihal_ctrl;
 extern NFCSTATUS phNxpNciHal_send_ext_cmd(uint16_t cmd_len, uint8_t *p_cmd);
-extern NFCSTATUS phNxpNciHal_send_clear_pipe_rsp(void);
 
 static int iso_dep_detected = 0x00;
 static int poll_timer_fired = 0x00;
@@ -35,8 +34,6 @@ static uint8_t cmd_resume_rf_discovery[] = { 0x21, 0x06, 0x01, 0x03 }; /* RF_DIS
 
 /*RF_DISCOVER_SELECT_CMD*/
 static uint8_t cmd_select_rf_discovery[] = {0x21,0x04,0x03,0x01,0x04,0x02 };
-/*Clear all pipe response*/
-static uint8_t clear_all_pipe_rsp[] = {0x03, 0x00, 0x02, 0x81, 0x80};
 
 static uint8_t bIgnorep2plogic = 0;
 static uint8_t *p_iso_ntf_buff = NULL; /* buffer to store second notification */
@@ -213,20 +210,6 @@ void *tmp_thread(void *tmp)
         CONCURRENCY_UNLOCK();
 
         if(data_len != sizeof(cmd_resume_rf_discovery))
-        {
-            NXPLOG_NCIHAL_E("phNxpNciHal_resume_polling_loop: data len mismatch");
-            status = NFCSTATUS_FAILED;
-        }
-    }
-    break;
-    case CLEAR_PIPE_RSP:
-    {
-        CONCURRENCY_LOCK();
-        data_len = phNxpNciHal_write_unlocked(sizeof(clear_all_pipe_rsp),
-                clear_all_pipe_rsp);
-        CONCURRENCY_UNLOCK();
-
-        if(data_len != sizeof(clear_all_pipe_rsp))
         {
             NXPLOG_NCIHAL_E("phNxpNciHal_resume_polling_loop: data len mismatch");
             status = NFCSTATUS_FAILED;
@@ -619,27 +602,5 @@ extern NFCSTATUS phNxpNciHal_clean_P2P_Prio()
     status |= phOsalNfc_Timer_Stop(custom_poll_timer);
     status |= phOsalNfc_Timer_Delete(custom_poll_timer);
     cleanup_timer=0;
-    return status;
-}
-
-/******************************************************************************
- * Function         phNxpNciHal_send_clear_pipe_rsp
- *
- * Description      This function is called when clear all pipe notification
- *                  is received from NFCC, than it will send the ANY OK Rsp
- * Returns          NFCSTATUS_SUCCESS if successful,otherwise NFCSTATUS_FAILED
- *
- ******************************************************************************/
-NFCSTATUS phNxpNciHal_send_clear_pipe_rsp(void)
-{
-    NFCSTATUS status = NFCSTATUS_SUCCESS;
-    phNxpNciHal_Sem_t cb_data;
-    pthread_t pthread;
-    discover_type = CLEAR_PIPE_RSP;
-
-    if(pthread_create(&pthread, NULL, tmp_thread, (void*) &discover_type) != 0)
-    {
-        NXPLOG_NCIHAL_E("phNxpNciHal_send_clear_pipe_rsp");
-    }
     return status;
 }

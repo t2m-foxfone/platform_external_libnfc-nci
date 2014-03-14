@@ -90,24 +90,6 @@ NFC_API extern void nfa_nv_co_read (UINT8 *p_buf, UINT16 nbytes, UINT8 block);
 
 /*******************************************************************************
 **
-** Function         nfa_nv_co_read_ext
-**
-** Description      This function is called by NFA to read in data from the
-**                  previously opened file.
-**
-** Parameters       pBuffer   - buffer to read the data into.
-**                  nbytes  - number of bytes to read into the buffer.
-**
-** Returns          void
-**
-**                  Note: After write this function is being called for dummy
-**                         read to make sync for ESE related data structures. 
-**
-*******************************************************************************/
-NFC_API extern void nfa_nv_co_read_ext(UINT8 *pBuffer, UINT16 nbytes, UINT8 block);
-
-/*******************************************************************************
-**
 ** Function         nfa_nv_co_write
 **
 ** Description      This function is called by io to send file data to the

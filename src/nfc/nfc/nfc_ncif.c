@@ -15,7 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2014 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 
 /******************************************************************************
  *
@@ -98,7 +116,24 @@ void nfc_ncif_cmd_timeout (void)
 
     if (nfc_cb.nfc_state == NFC_STATE_RECOVERY)
     {
-        //Do Nothing.
+        NFC_TRACE_ERROR0 ("nfc_ncif_cmd_timeout - 2nd time, going for PN547 hard reset.");
+        //TODO: Write logic for VEN_RESET.
+        nfc_cb.p_hal->power_cycle();
+
+        //Remove the pending cmds from the cmd queue. send any pending rsp/cback to jni
+        nfc_ncif_empty_cmd_queue();
+        //Cancel any ongoing data transfer.
+
+        //Update the cmd window, since rsp has not came.
+        nfc_ncif_update_window ();
+
+        /**
+         * send core reset - keep config
+         * send core init
+         * send discovery
+         * */
+        NFC_TRACE_ERROR0 ("nfc_ncif_cmd_timeout - 2nd time, sending core reset!!!");
+        nci_snd_core_reset(0x00);
     }
     else
     {
@@ -300,7 +335,10 @@ void nfc_ncif_check_cmd_queue (BT_HDR *p_buf)
         if ((nfc_cb.nci_cmd_xmit_q.count) || (nfc_cb.nci_cmd_window == 0))
         {
             GKI_enqueue (&nfc_cb.nci_cmd_xmit_q, p_buf);
-            p_buf = NULL;
+            if(p_buf != NULL){
+                NFC_TRACE_DEBUG0 ("nfc_ncif_check_cmd_queue : making p_buf NULL.");
+                p_buf = NULL;
+            }
         }
     }
 
@@ -395,7 +433,13 @@ void nfc_ncif_check_cmd_queue (BT_HDR *p_buf)
 void nfc_ncif_send_cmd (BT_HDR *p_buf)
 {
     NFC_TRACE_DEBUG0 ("nfc_ncif_send_cmd.");
-    UINT8 *cmd = (UINT8 *)(p_buf+1) + p_buf->offset;
+    UINT8 *cmd = NULL;
+    if(p_buf == NULL)
+    {
+        NFC_TRACE_DEBUG0 ("p_buf is NULL.");
+        return;
+    }
+    cmd = (UINT8 *)(p_buf+1) + p_buf->offset;
 
     if(nfc_cb.nfc_state == NFC_STATE_RECOVERY_CPLT  &&  (cmd[0] == 0x21 && cmd[1] == 0x03))
     {
@@ -417,7 +461,10 @@ void nfc_ncif_send_cmd (BT_HDR *p_buf)
             {
                 NFC_TRACE_DEBUG0 ("NFC recovery is in progress, storing outgoing packets.");
                 GKI_enqueue (&nfc_cb.nci_cmd_recov_xmit_q, p_buf);
-                p_buf = NULL;
+                if(p_buf != NULL){
+                    NFC_TRACE_DEBUG0 ("nfc_ncif_send_cmd : making p_buf NULL.");
+                    p_buf = NULL;
+                }
                 return;
             }
         }

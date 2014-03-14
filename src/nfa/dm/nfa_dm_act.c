@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -1545,6 +1545,12 @@ static void nfa_dm_poll_disc_cback (tNFA_DM_RF_DISC_EVT event, tNFC_DISCOVER *p_
                 {
                     /* activate LLCP */
                     nfa_p2p_activate_llcp (p_data);
+                    /* fix for gki leakage in BCM */
+                    if (!nfa_p2p_cb.is_initiator)
+                        {
+                            GKI_freebuf (nfa_dm_cb.p_activate_ntf);
+                            nfa_dm_cb.p_activate_ntf = NULL;
+                        }
                 }
             }
             else if (  (nfa_dm_cb.disc_cb.activated_protocol  == NFC_PROTOCOL_T1T)

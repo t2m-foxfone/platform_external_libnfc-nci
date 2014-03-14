@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 NXP Semiconductors
+ * Copyright (C) 2012-2014 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #define LOG_TAG "NxpNfcNciHal"
+
 #include <utils/Log.h>
 #include <errno.h>
 #include <hardware/hardware.h>
@@ -45,8 +46,6 @@ static int hal_open(const struct nfc_nci_device *p_dev,
 
     return retval;
 }
-
-
 
 /*******************************************************************************
 **

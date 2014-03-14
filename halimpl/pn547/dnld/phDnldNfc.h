@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2013 NXP Semiconductors
+ * Copyright (C) 2010-2014 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,7 @@ extern NFCSTATUS phDnldNfc_ReadLog(pphDnldNfc_Buff_t pData, pphDnldNfc_RspCb_t p
 extern NFCSTATUS phDnldNfc_Write(bool_t  bRecoverSeq, pphDnldNfc_Buff_t pData, pphDnldNfc_RspCb_t pNotify, void *pContext);
 extern NFCSTATUS phDnldNfc_Log(pphDnldNfc_Buff_t pData, pphDnldNfc_RspCb_t pNotify, void *pContext);
 extern void phDnldNfc_SetHwDevHandle(void);
+void phDnldNfc_ReSetHwDevHandle(void);
 extern NFCSTATUS phDnldNfc_ReadMem(void *pHwRef, pphDnldNfc_RspCb_t pNotify, void *pContext);
 extern NFCSTATUS phDnldNfc_RawReq(pphDnldNfc_Buff_t pFrameData, pphDnldNfc_Buff_t pRspData, pphDnldNfc_RspCb_t pNotify, void *pContext);
 extern NFCSTATUS phDnldNfc_InitImgInfo(void);

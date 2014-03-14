@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013 NXP Semiconductors
+ * Copyright (C) 2012-2014 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 
 #define HAL_EXTNS_WRITE_RSP_TIMEOUT   (1000)                /* Timeout value to wait for response from PN547 */
 
-#define P2P_PRIO_LOGIC_HAL_IMP
+#undef P2P_PRIO_LOGIC_HAL_IMP
 
 /******************* Global variables *****************************************/
 extern phNxpNciHal_Control_t nxpncihal_ctrl;
@@ -58,8 +58,7 @@ extern uint32_t timeoutTimerId;
 extern void read_retry();
 /************** HAL extension functions ***************************************/
 static void hal_extns_write_rsp_timeout_cb(uint32_t TimerId, void *pContext);
-static NFCSTATUS phNxpNciHal_frame_profile_cmd(phNxpNciProfile_Control_t *nxpprofile_ctrl,
-                                                uint8_t *p_cmd_data, uint16_t *cmd_len);
+
 /*******************************************************************************
 **
 ** Function         phNxpNciHal_ext_init
@@ -298,12 +297,13 @@ NFCSTATUS phNxpNciHal_process_ext_rsp (uint8_t *p_ntf, uint16_t *p_len)
         p_ntf[4] = 0x00;
         *p_len = 5;
     }
-    else if (p_ntf[2] == 0x15 && (p_ntf[0] == 0x40) && (p_ntf[1] = 0x01))
+    else if ((p_ntf[0] == 0x40) && (p_ntf[1] == 0x01))
     {
-        wFwVerRsp= (((uint32_t)p_ntf[21])<< 16U)|(((uint32_t)p_ntf[22])<< 8U)|p_ntf[23];
+        int len = p_ntf[2] + 2; /*include 2 byte header*/
+        wFwVerRsp= (((uint32_t)p_ntf[len - 2])<< 16U)|(((uint32_t)p_ntf[len - 1])<< 8U)|p_ntf[len];
         iCoreInitRspLen = *p_len;
         memcpy(bCoreInitRsp, p_ntf, *p_len);
-        NXPLOG_NCIHAL_D ("NxpNci> FW Version: %x.%x.%x", p_ntf[21], p_ntf[22], p_ntf[23]);
+        NXPLOG_NCIHAL_D ("NxpNci> FW Version: %x.%x.%x", p_ntf[len-2], p_ntf[len-1], p_ntf[len]);
     }
     //4200 02 00 01
     else if(p_ntf[0] == 0x42 && p_ntf[1] == 0x00 && ee_disc_done == 0x01)
@@ -344,14 +344,6 @@ NFCSTATUS phNxpNciHal_process_ext_rsp (uint8_t *p_ntf, uint16_t *p_len)
     {
         NXPLOG_NCIHAL_E("CORE_RESET_NTF received!");
         phNxpNciHal_emergency_recovery();
-    }
-    else if(p_ntf[0] == 0x03 && p_ntf[1] == 0x00 && p_ntf[2] == 0x03
-        && p_ntf[3] == 0x81 && p_ntf[4] == 0x15 && p_ntf[5] == 0x02)
-    {
-        NXPLOG_NCIHAL_D("Clear all pipe notification received Send ANY OK Response");
-        phNxpNciHal_send_clear_pipe_rsp();
-        status = NFCSTATUS_FAILED;
-        return status;
     }
     else if(p_ntf[0] == 0x61 && p_ntf[1] == 0x05 && p_ntf[4] == 0x01 && p_ntf[5] == 0x00 && p_ntf[6] == 0x01)
     {
@@ -478,7 +470,6 @@ NFCSTATUS phNxpNciHal_write_ext(uint16_t *cmd_len, uint8_t *p_cmd_data,
     {
         nxpprofile_ctrl.profile_type = EMV_CO_PROFILE;
         NXPLOG_NCIHAL_D ("EMV_CO_PROFILE mode - Enabled");
-        phNxpNciHal_frame_profile_cmd(&nxpprofile_ctrl, p_cmd_data, cmd_len);
         status = NFCSTATUS_SUCCESS;
     }
     else if (p_cmd_data[0] == 0x20 &&
@@ -492,7 +483,6 @@ NFCSTATUS phNxpNciHal_write_ext(uint16_t *cmd_len, uint8_t *p_cmd_data,
     {
         NXPLOG_NCIHAL_D ("NFC_FORUM_PROFILE mode - Enabled");
         nxpprofile_ctrl.profile_type = NFC_FORUM_PROFILE;
-        phNxpNciHal_frame_profile_cmd(&nxpprofile_ctrl, p_cmd_data, cmd_len);
         status = NFCSTATUS_SUCCESS;
     }
 
@@ -747,73 +737,5 @@ static void hal_extns_write_rsp_timeout_cb(uint32_t timerId, void *pContext)
 
     return;
 }
-/******************************************************************************
- * Function         phNxpNciHal_frame_profile_cmd
- *
- * Description      This function is called by libnfc-nci after successful open
- *                  of NFCC. All profile proprietary setting for PN547 are done here.
- *
- * Returns          Returns NFCSTATUS_SUCCESS on success else NFCSTATUS_FAILED
- *
- ******************************************************************************/
-static NFCSTATUS phNxpNciHal_frame_profile_cmd(phNxpNciProfile_Control_t *nxpprofile_ctrl,
-                                                uint8_t *p_cmd_data, uint16_t *cmd_len)
-{
-    NFCSTATUS status = NFCSTATUS_SUCCESS;
-    uint8_t booster_ctrl_val = 0x00;
 
-    NXPLOG_NCIHAL_D("In %s nxpprofile_ctrl->profile_type = 0x%x", __FUNCTION__,
-                            nxpprofile_ctrl->profile_type);
-    switch(nxpprofile_ctrl->profile_type)
-    {
-    case NFC_FORUM_PROFILE:
-        NXPLOG_NCIHAL_D("NFC forum polling profile");
-
-        if (nxpprofile_ctrl->is_booster_chip_present == 1)
-        {
-            /* lower nibble is delay */
-            booster_ctrl_val = (0x40 | (nxpprofile_ctrl->delay_rf_on & 0x0F));
-        }
-        break;
-    case EMV_CO_PROFILE:
-        NXPLOG_NCIHAL_D("EMV-CO polling profile");
-        if (nxpprofile_ctrl->is_booster_chip_present == 1)
-        {
-            /* lower nibble is delay */
-            booster_ctrl_val = (0x80 | (nxpprofile_ctrl->delay_rf_on & 0x0F));
-        }
-        break;
-    case RF_BOOSTER_LOW_POWER:
-        NXPLOG_NCIHAL_D("RF Booster in low power card detector");
-        if (nxpprofile_ctrl->is_booster_chip_present == 1)
-        {
-            /* lower nibble is delay */
-            booster_ctrl_val = (0x20 | (nxpprofile_ctrl->delay_rf_on & 0x0F));
-        }
-        break;
-    case RF_BOOSTER_LOAD_MOD:
-        NXPLOG_NCIHAL_D("RF Booster in active load modulation card mode");
-        if (nxpprofile_ctrl->is_booster_chip_present == 1)
-        {
-            /* lower nibble is delay */
-            booster_ctrl_val = (0x10 | (nxpprofile_ctrl->delay_rf_on & 0x0F));
-        }
-        break;
-    default:
-        NXPLOG_NCIHAL_E("Wrong profile_type defined in config file");
-        status = NFCSTATUS_FAILED;
-        break;
-    }
-    if (booster_ctrl_val)
-    {
-        p_cmd_data[2] += 0x04;
-        p_cmd_data[8] = 0xA0;
-        p_cmd_data[9] = 0x60;
-        p_cmd_data[10] = 0x01;
-        p_cmd_data[11] = booster_ctrl_val;
-        *cmd_len += 4;
-    }
-    NXPLOG_NCIHAL_D("Out %s", __FUNCTION__);
-    return status;
-}
 

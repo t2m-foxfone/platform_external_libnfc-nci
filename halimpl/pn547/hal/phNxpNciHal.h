@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2013 NXP Semiconductors
+ * Copyright (C) 2010-2014 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,9 @@ typedef struct phNxpNciHal_Control
     /* control granted callback */
     phNxpNciHal_control_granted_callback_t *p_control_granted_cback;
 
+    /* HAL open status */
+    bool_t hal_open_status;
+
     /* HAL extensions */
     uint8_t hal_ext_enabled;
 
@@ -81,17 +84,16 @@ typedef struct phNxpNciHal_Control
 typedef enum {
     NFC_FORUM_PROFILE,
     EMV_CO_PROFILE,
-    RF_BOOSTER_LOW_POWER,
-    RF_BOOSTER_LOAD_MOD,
     INVALID_PROFILe
 }phNxpNciProfile_t;
 /* NXP Poll Profile control structure */
 typedef struct phNxpNciProfile_Control
 {
     phNxpNciProfile_t profile_type;
-    uint8_t is_booster_chip_present;
-    uint8_t delay_rf_on;
-    //uint8_t emvco_poll_stat;
+    uint8_t                      bClkSrcVal;     /* Holds the System clock source read from config file */
+    uint8_t                      bClkFreqVal;    /* Holds the System clock frequency read from config file */
+    uint8_t                      bTimeout;       /* Holds the Timeout Value */
+
 } phNxpNciProfile_Control_t;
 
 /* Internal messages to handle callbacks */

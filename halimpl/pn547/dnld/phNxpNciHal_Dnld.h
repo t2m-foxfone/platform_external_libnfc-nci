@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 NXP Semiconductors
+ * Copyright (C) 2012-2014 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,6 @@
 #include <phNfcTypes.h>
 #include <phNfcStatus.h>
 
-NFCSTATUS phNxpNciHal_fw_download_seq(void);
+NFCSTATUS phNxpNciHal_fw_download_seq(uint8_t bClkSrcVal, uint8_t bClkFreqVal);
 
 #endif /* _PHNXPNCIHAL_DNLD_H_ */

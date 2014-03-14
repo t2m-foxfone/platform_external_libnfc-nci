@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2013 NXP Semiconductors
+ * Copyright (C) 2010-2014 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
  * Duration of Timer to wait after sending an Nci packet
  */
 #define PHTMLNFC_MAXTIME_RETRANSMIT (200U)
-
+#define MAX_WRITE_RETRY_COUNT 0x03
 /* Retry Count = Standby Recovery time of NFCC / Retransmission time + 1 */
 static uint8_t bCurrentRetryCount = (2000 / PHTMLNFC_MAXTIME_RETRANSMIT) + 1;
 
@@ -52,6 +52,7 @@ static void phTmlNfc_TmlThread(void *pParam);
 static void phTmlNfc_TmlWriterThread(void *pParam);
 static void phTmlNfc_ReTxTimerCb(uint32_t dwTimerId, void *pContext);
 static NFCSTATUS phTmlNfc_InitiateTimer(void);
+
 
 /* Function definitions */
 
@@ -450,6 +451,8 @@ static void phTmlNfc_TmlWriterThread(void *pParam)
     static phLibNfc_DeferredCall_t tDeferredInfo;
     /* Initialize Message structure to post message onto Callback Thread */
     static phLibNfc_Message_t tMsg;
+    /* In case of I2C Write Retry */
+    static uint16_t retry_cnt;
 
     NXPLOG_TML_D("PN547 - Tml Writer Thread Started................\n");
 
@@ -466,6 +469,8 @@ static void phTmlNfc_TmlWriterThread(void *pParam)
             wStatus = NFCSTATUS_SUCCESS;
             if (NFCSTATUS_INVALID_DEVICE != (uint32_t)gpphTmlNfc_Context->pDevHandle)
             {
+                retry:
+
                 gpphTmlNfc_Context->tWriteInfo.bEnable = 0;
                 /* Variable to fetch the actual number of bytes written */
                 dwNoBytesWrRd = PH_TMLNFC_RESET_VALUE;
@@ -475,8 +480,19 @@ static void phTmlNfc_TmlWriterThread(void *pParam)
                         gpphTmlNfc_Context->tWriteInfo.pBuffer,
                         gpphTmlNfc_Context->tWriteInfo.wLength
                         );
+
+                /* Try I2C Write Five Times, if it fails : Raju */
                 if (-1 == dwNoBytesWrRd)
                 {
+                    if (getDownloadFlag() == TRUE)
+                    {
+                        if (retry_cnt++ < MAX_WRITE_RETRY_COUNT)
+                        {
+                            NXPLOG_NCIHAL_E(
+                                    "PN547 - Error in I2C Write  - Retry 0x%x", retry_cnt);
+                            goto retry;
+                        }
+                    }
                     NXPLOG_TML_E("PN547 - Error in I2C Write.....\n");
                     wStatus = PHNFCSTVAL(CID_NFC_TML, NFCSTATUS_FAILED);
                 }
@@ -485,6 +501,7 @@ static void phTmlNfc_TmlWriterThread(void *pParam)
                     phNxpNciHal_print_packet("SEND", gpphTmlNfc_Context->tWriteInfo.pBuffer,
                             gpphTmlNfc_Context->tWriteInfo.wLength);
                 }
+                retry_cnt = 0;
                 if (NFCSTATUS_SUCCESS == wStatus)
                 {
                     NXPLOG_TML_D("PN547 - I2C Write successful.....\n");

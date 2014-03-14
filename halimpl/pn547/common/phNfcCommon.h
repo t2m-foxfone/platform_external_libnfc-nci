@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 NXP Semiconductors
+ * Copyright (C) 2010-2014 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@
 
 /* HAL Version number (Updated as per release) */
 #define NXP_MW_VERSION_MAJ  (1U)
-#define NXP_MW_VERSION_MIN  (0xAU)
+#define NXP_MW_VERSION_MIN  (0xCU)
 
 /*
  *****************************************************************
@@ -77,6 +77,8 @@
 
 #define NXP_SYS_CLK_FREQ_SEL  CLK_FREQ_19_2MHZ /* Set to one of CLK_FREQ_<value> */
 
+#define CLK_TO_CFG_DEF         1
+#define CLK_TO_CFG_MAX         25
 /*
  *  information to configure OSAL
  */

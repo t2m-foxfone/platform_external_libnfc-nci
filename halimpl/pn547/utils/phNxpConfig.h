@@ -20,7 +20,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -63,6 +63,9 @@ int isNxpConfigModified();
 
 #define NAME_MIFARE_READER_ENABLE    "MIFARE_READER_ENABLE"
 #define NAME_FW_STORAGE              "FW_STORAGE"
+#define NAME_NXP_SYS_CLK_SRC_SEL     "NXP_SYS_CLK_SRC_SEL"
+#define NAME_NXP_SYS_CLK_FREQ_SEL    "NXP_SYS_CLK_FREQ_SEL"
+#define NAME_NXP_SYS_CLOCK_TO_CFG    "NXP_SYS_CLOCK_TO_CFG"
 #define NAME_NXP_ACT_PROP_EXTN       "NXP_ACT_PROP_EXTN"
 #define NAME_NXP_RF_CONF_BLK_1       "NXP_RF_CONF_BLK_1"
 #define NAME_NXP_RF_CONF_BLK_2       "NXP_RF_CONF_BLK_2"
@@ -75,8 +78,6 @@ int isNxpConfigModified();
 #define NAME_NXP_CORE_MFCKEY_SETTING "NXP_CORE_MFCKEY_SETTING"
 #define NAME_NXP_CORE_STANDBY        "NXP_CORE_STANDBY"
 #define NAME_NXP_NFC_PROFILE_EXTN    "NXP_NFC_PROFILE_EXTN"
-#define NAME_NXP_BOOSTER_CHIP        "NXP_BOOSTER_CHIP"
-#define NAME_NXP_DELAY_RF_ON         "NXP_DELAY_RF_ON"
 #define NAME_NXP_SWP_FULL_PWR_ON     "NXP_SWP_FULL_PWR_ON"
 
 

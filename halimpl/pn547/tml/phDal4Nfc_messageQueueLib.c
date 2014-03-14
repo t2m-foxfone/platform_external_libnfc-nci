@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2013 NXP Semiconductors
+ * Copyright (C) 2010-2014 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,9 +62,15 @@ int phDal4Nfc_msgget(key_t key, int msgflg)
         return -1;
     memset(pQueue, 0, sizeof(phDal4Nfc_message_queue_t));
     if (pthread_mutex_init(&pQueue->nCriticalSectionMutex, NULL) == -1)
+    {
+        free(pQueue);
         return -1;
+    }
     if (sem_init(&pQueue->nProcessSemaphore, 0, 0) == -1)
+    {
+        free(pQueue);
         return -1;
+    }
 
     return ((int) pQueue);
 }

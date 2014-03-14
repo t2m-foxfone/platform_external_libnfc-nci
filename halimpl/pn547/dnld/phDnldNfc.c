@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2013 NXP Semiconductors
+ * Copyright (C) 2010-2014 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -680,7 +680,7 @@ NFCSTATUS phDnldNfc_Log(pphDnldNfc_Buff_t pData, pphDnldNfc_RspCb_t pNotify, voi
 NFCSTATUS phDnldNfc_Force(pphDnldNfc_Buff_t pInputs, pphDnldNfc_RspCb_t pNotify, void *pContext)
 {
     NFCSTATUS wStatus = NFCSTATUS_SUCCESS;
-    uint8_t bClkSrc,bClkFreq;
+    uint8_t bClkSrc = 0x00,bClkFreq = 0x00;
     uint8_t bPldVal[3] = {0x11,0x00,0x00};  /* default values to be used if input not provided */
 
     if((NULL == pNotify) || (NULL == pContext))
@@ -711,6 +711,36 @@ NFCSTATUS phDnldNfc_Force(pphDnldNfc_Buff_t pInputs, pphDnldNfc_RspCb_t pNotify,
                else if(CLK_SRC_PLL == (pInputs->pBuff[0]))
                {
                    bClkSrc = phDnldNfc_ClkSrcPLL;
+                   if(CLK_FREQ_13MHZ == (pInputs->pBuff[1]))
+                   {
+                       bClkFreq = phDnldNfc_ClkFreq_13Mhz;
+                   }
+                   else if(CLK_FREQ_19_2MHZ == (pInputs->pBuff[1]))
+                   {
+                       bClkFreq = phDnldNfc_ClkFreq_19_2Mhz;
+                   }
+                   else if(CLK_FREQ_24MHZ == (pInputs->pBuff[1]))
+                   {
+                       bClkFreq = phDnldNfc_ClkFreq_24Mhz;
+                   }
+                   else if(CLK_FREQ_26MHZ == (pInputs->pBuff[1]))
+                   {
+                       bClkFreq = phDnldNfc_ClkFreq_26Mhz;
+                   }
+                   else if(CLK_FREQ_38_4MHZ == (pInputs->pBuff[1]))
+                   {
+                       bClkFreq = phDnldNfc_ClkFreq_38_4Mhz;
+                   }
+                   else if(CLK_FREQ_52MHZ == (pInputs->pBuff[1]))
+                   {
+                       bClkFreq = phDnldNfc_ClkFreq_52Mhz;
+                   }
+                   else
+                   {
+                       NXPLOG_FWDNLD_E("Invalid Clk Frequency !! Using default value of 19.2Mhz..");
+                       bClkFreq = phDnldNfc_ClkFreq_19_2Mhz;
+                   }
+
                }
                else if(CLK_SRC_PADDIRECT == (pInputs->pBuff[0]))
                {
@@ -720,36 +750,6 @@ NFCSTATUS phDnldNfc_Force(pphDnldNfc_Buff_t pInputs, pphDnldNfc_RspCb_t pNotify,
                {
                    NXPLOG_FWDNLD_E("Invalid Clk src !! Using default value of PLL..");
                    bClkSrc = phDnldNfc_ClkSrcPLL;
-               }
-
-               if(CLK_FREQ_13MHZ == (pInputs->pBuff[1]))
-               {
-                   bClkFreq = phDnldNfc_ClkFreq_13Mhz;
-               }
-               else if(CLK_FREQ_19_2MHZ == (pInputs->pBuff[1]))
-               {
-                   bClkFreq = phDnldNfc_ClkFreq_19_2Mhz;
-               }
-               else if(CLK_FREQ_24MHZ == (pInputs->pBuff[1]))
-               {
-                   bClkFreq = phDnldNfc_ClkFreq_24Mhz;
-               }
-               else if(CLK_FREQ_26MHZ == (pInputs->pBuff[1]))
-               {
-                   bClkFreq = phDnldNfc_ClkFreq_26Mhz;
-               }
-               else if(CLK_FREQ_38_4MHZ == (pInputs->pBuff[1]))
-               {
-                   bClkFreq = phDnldNfc_ClkFreq_38_4Mhz;
-               }
-               else if(CLK_FREQ_52MHZ == (pInputs->pBuff[1]))
-               {
-                   bClkFreq = phDnldNfc_ClkFreq_52Mhz;
-               }
-               else
-               {
-                   NXPLOG_FWDNLD_E("Invalid Clk Frequency !! Using default value of 19.2Mhz..");
-                   bClkFreq = phDnldNfc_ClkFreq_19_2Mhz;
                }
 
                bPldVal[0] = 0U;
@@ -811,14 +811,43 @@ void phDnldNfc_SetHwDevHandle(void)
                                             sizeof(phDnldNfc_DlContext_t));
 
             gpphDnldContext = psDnldContext;
+
+
+        }
+        else
+        {
+            NXPLOG_FWDNLD_E("Error Allocating Mem for Dnld Context..")
         }
     }
+    if (gpphDnldContext != NULL)
+    {
+        (void ) memset((void *)gpphDnldContext,0,
+                                            sizeof(phDnldNfc_DlContext_t));
 
-    (void ) memset((void *)gpphDnldContext,0,
-                                        sizeof(phDnldNfc_DlContext_t));
+    }
     return;
 }
 
+/*******************************************************************************
+**
+** Function         phDnldNfc_ReSetHwDevHandle
+**
+** Description      Frees the HwDev handle to download context.
+**
+** Parameters       None
+**
+** Returns          None                -
+**
+*******************************************************************************/
+void phDnldNfc_ReSetHwDevHandle(void)
+{
+    if (gpphDnldContext != NULL)
+    {
+        NXPLOG_FWDNLD_E("Freeing Mem for Dnld Context..")
+        free(gpphDnldContext);
+        gpphDnldContext = NULL;
+    }
+}
 /*******************************************************************************
 **
 ** Function         phDnldNfc_ReadMem

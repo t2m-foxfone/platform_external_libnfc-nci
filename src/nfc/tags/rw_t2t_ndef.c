@@ -847,8 +847,8 @@ tNFC_STATUS rw_t2t_read_locks (void)
 
     if (  (p_t2t->tag_hdr[T2T_CC3_RWA_BYTE] != T2T_CC3_RWA_RW)
         ||((p_t2t->tag_hdr[0] == TAG_MIFARE_MID) && (p_t2t->tag_hdr[T2T_CC2_TMS_BYTE] == T2T_CC2_TMS_MULC))
-        ||((p_t2t->tag_hdr[0] == TAG_MIFARE_MID) && (p_t2t->tag_hdr[T2T_CC2_TMS_BYTE] == T2T_CC2_TMS_MUL))  )
-
+        ||((p_t2t->tag_hdr[0] == TAG_MIFARE_MID) && (p_t2t->tag_hdr[T2T_CC2_TMS_BYTE] == T2T_CC2_TMS_MUL))
+        ||(p_t2t->skip_dyn_locks)  )
     {
         /* Skip reading dynamic lock bytes if CC is set as Read only or on MUL/MUL-C tag */
         while (num_locks < p_t2t->num_lockbytes)
@@ -2958,8 +2958,12 @@ tNFC_STATUS RW_T2tLocateTlv (UINT8 tlv_type)
 ** Returns          NCI_STATUS_OK,if detect op started.Otherwise,error status.
 **
 *******************************************************************************/
-tNFC_STATUS RW_T2tDetectNDef (void)
+tNFC_STATUS RW_T2tDetectNDef (BOOLEAN skip_dyn_locks)
 {
+    tRW_T2T_CB  *p_t2t = &rw_cb.tcb.t2t;
+
+    p_t2t->skip_dyn_locks = skip_dyn_locks;
+
     return RW_T2tLocateTlv (TAG_NDEF_TLV);
 }
 

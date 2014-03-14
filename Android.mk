@@ -6,6 +6,7 @@ $(patsubst ./%,%, \
  )
 endef
 
+
 LOCAL_PATH:= $(call my-dir)
 NFA := src/nfa
 NFC := src/nfc
@@ -27,7 +28,7 @@ include $(CLEAR_VARS)
 LOCAL_PRELINK_MODULE := false
 LOCAL_ARM_MODE := arm
 LOCAL_MODULE := libnfc-nci
-LOCAL_MODULE_TAGS := optional eng
+LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES := libhardware_legacy libcutils liblog libdl libstlport libhardware
 LOCAL_CFLAGS := $(D_CFLAGS)
 LOCAL_C_INCLUDES := external/stlport/stlport bionic/ bionic/libstdc++/include \

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 NXP Semiconductors
+ * Copyright (C) 2012-2014 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,27 @@ typedef enum
     NFC_BIT_RATE_424,
     NFC_BIT_RATE_848,
 } phNxpNfc_Bitrate_t;
+
+typedef struct phAntenna_St_Resp
+{
+     /* Txdo Raw Value*/
+    uint16_t            wTxdoRawValue;
+    uint16_t            wTxdoMeasuredRangeMin;    /*Txdo Measured Range Max */
+    uint16_t            wTxdoMeasuredRangeMax;    /*Txdo Measured Range Min */
+    uint16_t            wTxdoMeasuredTolerance;    /*Txdo Measured Range Tolerance */
+     /* Agc Values */
+    uint16_t            wAgcValue;    /*Agc Min Value*/
+    uint16_t            wAgcValueTolerance;    /*Txdo Measured Range*/
+     /* Agc value with NFCLD */
+    uint16_t            wAgcValuewithfixedNFCLD;    /*Agc Value with Fixed NFCLD Max */
+    uint16_t            wAgcValuewithfixedNFCLDTolerance;    /*Agc Value with Fixed NFCLD Tolerance */
+     /* Agc Differential Values With Open/Short RM */
+    uint16_t            wAgcDifferentialWithOpen1;    /*Agc Differential With Open 1*/
+    uint16_t            wAgcDifferentialWithOpenTolerance1;    /*Agc Differential With Open Tolerance 1*/
+    uint16_t            wAgcDifferentialWithOpen2;    /*Agc Differential With Open 2*/
+    uint16_t            wAgcDifferentialWithOpenTolerance2;    /*Agc Differential With Open Tolerance 2*/
+}phAntenna_St_Resp_t;           /* Instance of Transaction structure */
+
 
 /*******************************************************************************
  **

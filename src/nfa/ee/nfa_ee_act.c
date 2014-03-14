@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -1036,7 +1036,7 @@ void nfa_ee_nci_disc_ntf(tNFA_EE_MSG *p_data)
     }
     NFA_TRACE_DEBUG1 ("nfa_ee_nci_disc_ntf cur_ee:%d", nfa_ee_cb.cur_ee);
 
-    if (p_cb)
+    if (p_cb && (p_cb->ee_status != NFA_EE_STATUS_ACTIVE))
     {
         p_cb->nfcee_id      = p_ee->nfcee_id;
         p_cb->ee_status     = p_ee->ee_status;
@@ -1275,7 +1275,8 @@ void nfa_ee_nci_mode_set_rsp(tNFA_EE_MSG *p_data)
             }
             p_cb->tech_switch_on    = p_cb->tech_switch_off = p_cb->tech_battery_off    = 0;
             p_cb->proto_switch_on   = p_cb->proto_switch_off= p_cb->proto_battery_off   = 0;
-            p_cb->aid_entries       = 0;
+           /*Do not clear the AID list, as it will sent again when EE will be reactivated.*/
+            /*p_cb->aid_entries       = 0;*/
             p_cb->ee_status = NFC_NFCEE_STATUS_INACTIVE;
         }
     }
@@ -1682,6 +1683,10 @@ tNFA_STATUS nfa_ee_route_add_one_ecb(tNFA_EE_ECB *p_cb, int max_len, BOOLEAN mor
             power_cfg |= NCI_ROUTE_PWR_STATE_SWITCH_OFF;
         if (p_cb->tech_battery_off & nfa_ee_tech_mask_list[xx])
             power_cfg |= NCI_ROUTE_PWR_STATE_BATT_OFF;
+
+        if(power_cfg != 0x00)
+            power_cfg |= NCI_ROUTE_PWR_STATE_SCREEN_OFF;
+
         if (power_cfg)
         {
             *pp++   = NFC_ROUTE_TAG_TECH;
@@ -1705,6 +1710,10 @@ tNFA_STATUS nfa_ee_route_add_one_ecb(tNFA_EE_ECB *p_cb, int max_len, BOOLEAN mor
             power_cfg |= NCI_ROUTE_PWR_STATE_SWITCH_OFF;
         if (p_cb->proto_battery_off & nfa_ee_proto_mask_list[xx])
             power_cfg |= NCI_ROUTE_PWR_STATE_BATT_OFF;
+
+        if(power_cfg != 0x00)
+            power_cfg |= NCI_ROUTE_PWR_STATE_SCREEN_OFF;
+
         if (power_cfg)
         {
             *pp++   = NFC_ROUTE_TAG_PROTO;

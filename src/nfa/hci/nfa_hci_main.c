@@ -15,7 +15,25 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2014 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 
 /******************************************************************************
  *
@@ -569,11 +587,6 @@ void nfa_hci_startup (void)
             if(ee_info[count].ee_interface[0] == NFA_EE_INTERFACE_HCI_ACCESS)
             {
                 found = TRUE;
-
-                if (ee_info[count].ee_status == NFA_EE_STATUS_INACTIVE)
-                {
-                    NFC_NfceeModeSet (target_handle, NFC_MODE_ACTIVATE);
-                }
                 if ((status = NFC_ConnCreate (NCI_DEST_TYPE_NFCEE, target_handle, NFA_EE_INTERFACE_HCI_ACCESS, nfa_hci_conn_cback)) == NFA_STATUS_OK)
                     nfa_sys_start_timer (&nfa_hci_cb.timer, NFA_HCI_RSP_TIMEOUT_EVT, NFA_HCI_CON_CREATE_TIMEOUT_VAL);
                 else
@@ -581,6 +594,10 @@ void nfa_hci_startup (void)
                     nfa_hci_cb.hci_state = NFA_HCI_STATE_DISABLED;
                     NFA_TRACE_ERROR0 ("nfa_hci_startup - Failed to Create Logical connection. HCI Initialization/Restore failed");
                     nfa_hci_startup_complete (NFA_STATUS_FAILED);
+                }
+                if (ee_info[count].ee_status == NFA_EE_STATUS_INACTIVE)
+                {
+                    NFC_NfceeModeSet (target_handle, NFC_MODE_ACTIVATE);
                 }
             }
             count++;
@@ -784,10 +801,19 @@ static void nfa_hci_conn_cback (UINT8 conn_id, tNFC_CONN_EVT event, tNFC_CONN *p
     /* a single response, we can go back to idle state                       */
     if (  (nfa_hci_cb.hci_state == NFA_HCI_STATE_WAIT_RSP)
         &&((nfa_hci_cb.type == NFA_HCI_RESPONSE_TYPE) || (nfa_hci_cb.w4_rsp_evt && (nfa_hci_cb.type == NFA_HCI_EVENT_TYPE)
-                && (nfa_hci_cb.inst != NFA_HCI_EVT_WTX)))  )
+       )))
     {
         nfa_sys_stop_timer (&nfa_hci_cb.timer);
-        nfa_hci_cb.hci_state  = NFA_HCI_STATE_IDLE;
+        if(nfa_hci_cb.inst == NFA_HCI_EVT_WTX)
+        {
+            if(nfa_hci_cb.w4_rsp_evt == TRUE)
+            {
+                const INT32 rsp_timeout = 3000; //3-sec
+                nfa_sys_start_timer (&nfa_hci_cb.timer, NFA_HCI_RSP_TIMEOUT_EVT, rsp_timeout);
+            }
+        }
+        else
+            nfa_hci_cb.hci_state  = NFA_HCI_STATE_IDLE;
     }
 
     switch (pipe)
@@ -1165,7 +1191,6 @@ static BOOLEAN nfa_hci_evt_hdlr (BT_HDR *p_msg)
     {
         nfa_hci_cb.nv_write_needed = FALSE;
         nfa_nv_co_write ((UINT8 *)&nfa_hci_cb.cfg, sizeof (nfa_hci_cb.cfg),DH_NV_BLOCK);
-        nfa_nv_co_read_ext ((UINT8 *)&nfa_hci_cb.cfg, sizeof (nfa_hci_cb.cfg),DH_NV_BLOCK);
     }
 
     return FALSE;

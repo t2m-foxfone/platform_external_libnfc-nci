@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@
 #include "nfa_dm_int.h"
 #include "nfa_sys_int.h"
 
+tNFA_DM_CB  nfa_dm_cb;
 
 /*****************************************************************************
 ** Constants and types
@@ -59,9 +60,6 @@ static const tNFA_SYS_REG nfa_dm_sys_reg =
     nfa_dm_sys_disable,
     nfa_dm_proc_nfcc_power_mode
 };
-
-
-tNFA_DM_CB  nfa_dm_cb = {FALSE};
 
 
 #define NFA_DM_NUM_ACTIONS  (NFA_DM_MAX_EVT & 0x00ff)

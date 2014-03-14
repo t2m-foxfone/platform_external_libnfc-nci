@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -122,12 +122,12 @@ typedef UINT16 tNFA_HANDLE;
 typedef UINT8 tNFA_PMID;
 
 /* Definitions for tNFA_TECHNOLOGY_MASK */
-#define NFA_TECHNOLOGY_MASK_A	        0x01    /* NFC Technology A             */
-#define NFA_TECHNOLOGY_MASK_B	        0x02    /* NFC Technology B             */
-#define NFA_TECHNOLOGY_MASK_F	        0x04    /* NFC Technology F             */
-#define NFA_TECHNOLOGY_MASK_ISO15693	0x08    /* Proprietary Technology       */
-#define NFA_TECHNOLOGY_MASK_B_PRIME	    0x10    /* Proprietary Technology       */
-#define NFA_TECHNOLOGY_MASK_KOVIO	    0x20    /* Proprietary Technology       */
+#define NFA_TECHNOLOGY_MASK_A           0x01    /* NFC Technology A             */
+#define NFA_TECHNOLOGY_MASK_B           0x02    /* NFC Technology B             */
+#define NFA_TECHNOLOGY_MASK_F           0x04    /* NFC Technology F             */
+#define NFA_TECHNOLOGY_MASK_ISO15693    0x08    /* Proprietary Technology       */
+#define NFA_TECHNOLOGY_MASK_B_PRIME     0x10    /* Proprietary Technology       */
+#define NFA_TECHNOLOGY_MASK_KOVIO       0x20    /* Proprietary Technology       */
 #define NFA_TECHNOLOGY_MASK_A_ACTIVE    0x40    /* NFC Technology A active mode */
 #define NFA_TECHNOLOGY_MASK_F_ACTIVE    0x80    /* NFC Technology F active mode */
 #define NFA_TECHNOLOGY_MASK_ALL         0xFF    /* All supported technologies   */
@@ -162,7 +162,7 @@ typedef UINT8 tNFA_PROTOCOL_MASK;
 #define NFA_DM_SET_CONFIG_EVT           2   /* Result of NFA_SetConfig          */
 #define NFA_DM_GET_CONFIG_EVT           3   /* Result of NFA_GetConfig          */
 #define NFA_DM_PWR_MODE_CHANGE_EVT      4   /* Result of NFA_PowerOffSleepMode  */
-#define NFA_DM_RF_FIELD_EVT	            5   /* Status of RF Field               */
+#define NFA_DM_RF_FIELD_EVT             5   /* Status of RF Field               */
 #define NFA_DM_NFCC_TIMEOUT_EVT         6   /* NFCC is not responding           */
 #define NFA_DM_NFCC_TRANSPORT_ERR_EVT   7   /* NCI Tranport error               */
 #define NFA_DM_EMVCO_PCD_COLLISION_EVT  8   /* Collision event in case of EMV-CO Profile (Nxp)*/
@@ -292,7 +292,7 @@ typedef UINT8   tNFA_DEACTIVATE_TYPE;
 /* Data for NFA_DISC_RESULT_EVT */
 typedef struct
 {
-    tNFA_STATUS	        status;         /* NFA_STATUS_OK if successful       */
+    tNFA_STATUS         status;         /* NFA_STATUS_OK if successful       */
     tNFC_RESULT_DEVT    discovery_ntf;  /* RF discovery notification details */
 } tNFA_DISC_RESULT;
 
@@ -605,10 +605,10 @@ typedef tNFC_INTF_TYPE tNFA_INTF_TYPE;
 #define NFA_TNF_RFC2046_MEDIA   NDEF_TNF_MEDIA      /* Media-type as defined in RFC 2046 [RFC 2046]     */
 #define NFA_TNF_RFC3986_URI     NDEF_TNF_URI        /* Absolute URI as defined in RFC 3986 [RFC 3986]   */
 #define NFA_TNF_EXTERNAL        NDEF_TNF_EXT        /* NFC Forum external type [NFC RTD]                */
-#define NFA_TNF_UNKNOWN	        NDEF_TNF_UNKNOWN    /* Unknown                                          */
+#define NFA_TNF_UNKNOWN         NDEF_TNF_UNKNOWN    /* Unknown                                          */
 #define NFA_TNF_UNCHANGED       NDEF_TNF_UNCHANGED  /* Unchanged                                        */
 #define NFA_TNF_RESERVED        NDEF_TNF_RESERVED   /* Reserved                                         */
-#define NFA_TNF_DEFAULT	        0xFF                /* Used to register default NDEF type handler       */
+#define NFA_TNF_DEFAULT         0xFF                /* Used to register default NDEF type handler       */
 typedef UINT8 tNFA_TNF;
 
 /* Definitions for tNFA_NDEF_URI_ID (Frequently used prefixes. For additional values, see [NFC RTD URI] */
@@ -624,7 +624,7 @@ typedef UINT8 tNFA_NDEF_URI_ID;
 
 /* Events for tNFA_NDEF_CBACK */
 #define NFA_NDEF_REGISTER_EVT   0   /* NDEF record type registered. (In response to NFA_RegisterNDefTypeHandler)    */
-#define NFA_NDEF_DATA_EVT	    1   /* Received an NDEF message with the registered type. See [tNFA_NDEF_DATA]       */
+#define NFA_NDEF_DATA_EVT       1   /* Received an NDEF message with the registered type. See [tNFA_NDEF_DATA]       */
 typedef UINT8 tNFA_NDEF_EVT;
 
 /* Structure for NFA_NDEF_REGISTER_EVT event data */
@@ -1188,4 +1188,3 @@ NFC_API extern UINT8 NFA_SetTraceLevel (UINT8 new_level);
 #endif
 
 #endif /* NFA_API_H */
-

@@ -37,7 +37,6 @@ extern UINT32 ScrProtocolTraceFlag;         // = SCR_PROTO_TRACE_ALL; // 0x017F;
 static const char* sTable = "0123456789abcdef";
 extern char bcm_nfc_location[];
 static const char* sNfaStorageBin = "/nfaStorage.bin";
-static void create_file(char *filename);
 
 /*******************************************************************************
 **
@@ -108,7 +107,6 @@ NFC_API extern void nfa_nv_co_read(UINT8 *pBuffer, UINT16 nbytes, UINT8 block)
     sprintf (filename, "%s%u", filename2, block);
 
     ALOGD ("%s: buffer len=%u; file=%s", __FUNCTION__, nbytes, filename);
-    create_file(filename);
     int fileStream = open (filename, O_RDONLY);
     if (fileStream >= 0)
     {
@@ -131,68 +129,6 @@ NFC_API extern void nfa_nv_co_read(UINT8 *pBuffer, UINT16 nbytes, UINT8 block)
         nfa_nv_ci_read (0, NFA_NV_CO_FAIL, block);
     }
 }
-
-/*******************************************************************************
-**
-** Function         nfa_nv_co_read_ext
-**
-** Description      This function is called by NFA to read in data from the
-**                  previously opened file.
-**
-** Parameters       pBuffer   - buffer to read the data into.
-**                  nbytes  - number of bytes to read into the buffer.
-**
-** Returns          void
-**
-**                  Note: Upon completion of the request, nfa_nv_ci_read() is
-**                        called with the buffer of data, along with the number
-**                        of bytes read into the buffer, and a status.  The
-**                        call-in function should only be called when ALL requested
-**                        bytes have been read, the end of file has been detected,
-**                        or an error has occurred.
-**
-*******************************************************************************/
-NFC_API extern void nfa_nv_co_read_ext(UINT8 *pBuffer, UINT16 nbytes, UINT8 block)
-{
-    char filename[256], filename2[256];
-
-    memset (filename, 0, sizeof(filename));
-    memset (filename2, 0, sizeof(filename2));
-    strcpy(filename2, bcm_nfc_location);
-    strncat(filename2, sNfaStorageBin, sizeof(filename2)-strlen(filename2)-1);
-    if (strlen(filename2) > 200)
-    {
-        ALOGE ("%s: filename too long", __FUNCTION__);
-        return;
-    }
-    sprintf (filename, "%s%u", filename2, block);
-
-
-    ALOGD ("%s: buffer len=%u; file=%s", __FUNCTION__, nbytes, filename);
-    int fileStream = open (filename, O_RDONLY);
-    if (fileStream >= 0)
-    {
-        size_t actualRead = read (fileStream, pBuffer, nbytes);
-        if (actualRead > 0)
-        {
-            ALOGD ("%s: read bytes=%u", __FUNCTION__, actualRead);
-//            nfa_nv_ci_read (actualRead, NFA_NV_CO_OK, block);
-        }
-        else
-        {
-            ALOGE ("%s: fail to read", __FUNCTION__);
-//            nfa_nv_ci_read (actualRead, NFA_NV_CO_FAIL, block);
-        }
-        close (fileStream);
-    }
-    else
-    {
-        ALOGE ("%s: fail to open", __FUNCTION__);
-//        nfa_nv_ci_read (0, NFA_NV_CO_FAIL, block);
-    }
-}
-
-
 
 /*******************************************************************************
 **
@@ -231,11 +167,9 @@ NFC_API extern void nfa_nv_co_write(const UINT8 *pBuffer, UINT16 nbytes, UINT8 b
     int fileStream = 0;
 
     fileStream = open (filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-    //fileStream = 1;
     if (fileStream >= 0)
     {
         size_t actualWritten = write (fileStream, pBuffer, nbytes);
-        //size_t actualWritten =  228;
         ALOGD ("%s: %d bytes written", __FUNCTION__, actualWritten);
         if (actualWritten > 0) {
             nfa_nv_ci_write (NFA_NV_CO_OK);
@@ -625,67 +559,3 @@ void DispRWT4Tags (BT_HDR *p_buf, BOOLEAN is_rx) {}
 void DispCET4Tags (BT_HDR *p_buf, BOOLEAN is_rx) {}
 void DispRWI93Tag (BT_HDR *p_buf, BOOLEAN is_rx, UINT8 command_to_respond) {}
 void DispNDEFMsg (UINT8 *pMsg, UINT32 MsgLen, BOOLEAN is_recv) {}
-
-static void create_file(char *filename)
-{
-    static char default_data[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x41, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x0a, 0x01, 0x41, 0x02, 0x41, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0x3f, 0x95,
-                       0xff, 0xff, 0x00, 0x95, 0xff, 0xff, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                       0x00, 0x00, 0x00, 0x00};
-
-    struct stat st;
-    if (stat(filename, &st) == -1)
-    {
-        ALOGE("%s file not present = %s", __FUNCTION__, filename);
-        int fileStream = 0;
-
-        fileStream = open (filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-        if (fileStream >= 0)
-        {
-            size_t actualWritten = write (fileStream, default_data, sizeof(default_data));
-            ALOGD ("%s: %d bytes written", __FUNCTION__, actualWritten);
-            if (actualWritten > 0)
-            {
-                ALOGD("File created successfully %s", filename);
-            }
-            else
-            {
-                ALOGE("Failed to create default file");
-            }
-            close (fileStream);
-        }
-        else
-        {
-            ALOGE("Failed to open file = %s errorno = %d", filename, errno);
-        }
-    }
-    else
-    {
-        ALOGD("directory already present");
-    }
-}

@@ -317,6 +317,7 @@ typedef struct
     BOOLEAN             b_read_data;                        /* Tag data block read from tag                                 */
     BOOLEAN             b_hard_lock;                        /* Hard lock the tag as part of config tag to Read only         */
 #if (defined (RW_NDEF_INCLUDED) && (RW_NDEF_INCLUDED == TRUE))
+    BOOLEAN             skip_dyn_locks;                     /* Skip reading dynamic lock bytes from the tag                 */
     UINT8               found_tlv;                          /* The Tlv found while searching a particular TLV               */
     UINT8               tlv_detect;                         /* TLV type under detection                                     */
     UINT8               num_lock_tlvs;                      /* Number of lcok tlvs detected in the tag                      */

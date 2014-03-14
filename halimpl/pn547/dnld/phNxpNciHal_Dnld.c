@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013 NXP Semiconductors
+ * Copyright (C) 2012-2014 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include <phNxpNciHal_Dnld.h>
 #include <phNxpNciHal_utils.h>
 #include <phNxpLog.h>
+#include <phNxpConfig.h>
 
 /* Macro */
 #define PHLIBNFC_IOCTL_DNLD_MAX_ATTEMPTS 3
@@ -76,6 +77,8 @@ typedef struct
     bool_t                       bDnldAttemptFailed;  /* Flag to indicate last download attempt failed */
     NFCSTATUS                    bLastStatus;    /* Holds the actual download write attempt status */
     phLibNfc_EELogParams_t       tLogParams;     /* holds the params that could be logged to reserved EE address */
+    uint8_t                      bClkSrcVal;     /* Holds the System clock source read from config file */
+    uint8_t                      bClkFreqVal;    /* Holds the System clock frequency read from config file */
 } phNxpNciHal_fw_Ioctl_Cntx_t;
 
 
@@ -373,8 +376,12 @@ static NFCSTATUS phNxpNciHal_fw_dnld_normal(void* pContext, NFCSTATUS status,
     }
     else
     {
+        /*
         bClkVal[0] = NXP_SYS_CLK_SRC_SEL;
         bClkVal[1] = NXP_SYS_CLK_FREQ_SEL;
+        */
+        bClkVal[0] = gphNxpNciHal_fw_IoctlCtx.bClkSrcVal;
+        bClkVal[1] = gphNxpNciHal_fw_IoctlCtx.bClkFreqVal;
 
         (tData.pBuff) = bClkVal;
         (tData.wLen) = sizeof(bClkVal);
@@ -446,8 +453,12 @@ static NFCSTATUS phNxpNciHal_fw_dnld_force(void* pContext, NFCSTATUS status,
     }
     else
     {
+        /*
         bClkVal[0] = NXP_SYS_CLK_SRC_SEL;
         bClkVal[1] = NXP_SYS_CLK_FREQ_SEL;
+        */
+        bClkVal[0] = gphNxpNciHal_fw_IoctlCtx.bClkSrcVal;
+        bClkVal[1] = gphNxpNciHal_fw_IoctlCtx.bClkFreqVal;
 
         (tData.pBuff) = bClkVal;
         (tData.wLen) = sizeof(bClkVal);
@@ -1598,7 +1609,7 @@ static  NFCSTATUS phNxpNciHal_fw_dnld_complete(void* pContext,NFCSTATUS status,
         void* pInfo)
 {
     NFCSTATUS wStatus = NFCSTATUS_SUCCESS;
-
+    NFCSTATUS fStatus = status;
     UNUSED(pInfo);
     UNUSED(pContext);
 
@@ -1756,6 +1767,10 @@ static  NFCSTATUS phNxpNciHal_fw_dnld_complete(void* pContext,NFCSTATUS status,
             {
                 NXPLOG_FWDNLD_E("Switching to NormalMode Failed!!");
             }
+            else
+            {
+                wStatus = fStatus;
+            }
         }
 
         (gphNxpNciHal_fw_IoctlCtx.bPrevSessnOpen) = FALSE;
@@ -1795,7 +1810,7 @@ static  NFCSTATUS phNxpNciHal_fw_dnld_complete(void* pContext,NFCSTATUS status,
 ** Returns          NFCSTATUS_SUCCESS if success
 **
 *******************************************************************************/
-NFCSTATUS phNxpNciHal_fw_download_seq(void)
+NFCSTATUS phNxpNciHal_fw_download_seq(uint8_t bClkSrcVal, uint8_t bClkFreqVal)
 {
     NFCSTATUS status = NFCSTATUS_FAILED;
     phDnldNfc_Buff_t pInfo;
@@ -1814,7 +1829,8 @@ NFCSTATUS phNxpNciHal_fw_download_seq(void)
     (gphNxpNciHal_fw_IoctlCtx.bSkipForce) = FALSE;
     (gphNxpNciHal_fw_IoctlCtx.bSendNciCmd) = FALSE;
     (gphNxpNciHal_fw_IoctlCtx.bDnldAttempts) = 0;
-
+    (gphNxpNciHal_fw_IoctlCtx.bClkSrcVal) = bClkSrcVal;
+    (gphNxpNciHal_fw_IoctlCtx.bClkFreqVal) = bClkFreqVal;
     /* Get firmware version */
     if (NFCSTATUS_SUCCESS == phDnldNfc_InitImgInfo())
     {

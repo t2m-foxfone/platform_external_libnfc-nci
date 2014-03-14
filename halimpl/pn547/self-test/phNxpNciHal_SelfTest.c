@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 NXP Semiconductors
+ * Copyright (C) 2012-2014 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@
 
 typedef uint8_t (*st_validator_t)(nci_data_t *exp, phTmlNfc_TransactInfo_t *act);
 
+phAntenna_St_Resp_t phAntenna_resp;
+
 typedef struct nci_test_data
 {
     nci_data_t cmd;
@@ -53,6 +55,12 @@ extern phNxpNciHal_Control_t nxpncihal_ctrl;
 
 /* Driver parameters */
 phLibNfc_sConfig_t   gDrvCfg;
+
+NFCSTATUS gtxldo_status = NFCSTATUS_FAILED;
+NFCSTATUS gagc_value_status = NFCSTATUS_FAILED;
+NFCSTATUS gagc_nfcld_status = NFCSTATUS_FAILED;
+NFCSTATUS gagc_differential_status = NFCSTATUS_FAILED;
+
 
 static uint8_t st_validator_testEquals(nci_data_t *exp, phTmlNfc_TransactInfo_t *act);
 static uint8_t st_validator_null(nci_data_t *exp, phTmlNfc_TransactInfo_t *act);
@@ -84,7 +92,7 @@ static nci_test_data_t swp2_test_data[] = {
             0x03, {0x20,0x01,0x00} /* cmd */
         },
         {
-            0x4, {0x40,0x01,0x15,0x00
+            0x4, {0x40,0x01,0x17,0x00
             } /* exp_rsp */
         },
         {
@@ -143,7 +151,7 @@ static nci_test_data_t swp1_test_data[] = {
             0x03, {0x20,0x01,0x00} /* cmd */
         },
         {
-            0x4, {0x40,0x01,0x15,0x00
+            0x4, {0x40,0x01,0x17,0x00
             } /* exp_rsp */
         },
         {
@@ -199,7 +207,7 @@ static nci_test_data_t prbs_test_data[] = {
             0x03, {0x20,0x01,0x00} /* cmd */
         },
         {
-            0x4, {0x40,0x01,0x15,0x00
+            0x4, {0x40,0x01,0x17,0x00
             } /* exp_rsp */
         },
         {
@@ -229,7 +237,7 @@ static nci_test_data_t rf_field_on_test_data[] = {
             0x03, {0x20,0x01,0x00} /* cmd */
         },
         {
-            0x4, {0x40,0x01,0x15,0x00
+            0x4, {0x40,0x01,0x17,0x00
             } /* exp_rsp */
         },
         {
@@ -272,7 +280,7 @@ static nci_test_data_t rf_field_off_test_data[] = {
             0x03, {0x20,0x01,0x00} /* cmd */
         },
         {
-            0x4, {0x40,0x01,0x15,0x00
+            0x4, {0x40,0x01,0x17,0x00
             } /* exp_rsp */
         },
         {
@@ -349,7 +357,7 @@ static nci_test_data_t antenna_self_test_data[] = {
             0x03, {0x20,0x01,0x00} /* cmd */
         },
         {
-            0x4, {0x40,0x01,0x15,0x00
+            0x4, {0x40,0x01,0x17,0x00
             } /* exp_rsp */
         },
         {
@@ -489,6 +497,9 @@ static uint8_t st_validator_testSWP1_vltg(nci_data_t *exp, phTmlNfc_TransactInfo
 static uint8_t st_validator_testAntenna_Txldo(nci_data_t *exp, phTmlNfc_TransactInfo_t *act)
 {
     uint8_t result = 0;
+    uint8_t mesuredrange =0;
+    long measured_val = 0;
+    int tolerance = 0;
 
     if(NULL == exp || NULL == act)
     {
@@ -501,26 +512,53 @@ static uint8_t st_validator_testAntenna_Txldo(nci_data_t *exp, phTmlNfc_Transact
         if (NFCSTATUS_SUCCESS == act->pBuff[3])
         {
             result = 1;
-            NXPLOG_NCIHAL_D("TxLDO current measured raw value in mA : 0x%x", act->pBuff[4]);
+            NXPLOG_NCIHAL_D("Antenna: TxLDO current measured raw value in mA : 0x%x", act->pBuff[4]);
             if(0x00 == act->pBuff[5])
             {
                 NXPLOG_NCIHAL_D("Measured range : 0x00 = 50 - 100 mA");
-                NXPLOG_NCIHAL_D("TxLDO current absolute value in uA = %d", ((400 * act->pBuff[4]) + 50000));
+                measured_val = ((0.40 * act->pBuff[4]) + 50);
+                NXPLOG_NCIHAL_D("TxLDO current absolute value in mA = %ld", measured_val);
             }
             else
             {
                 NXPLOG_NCIHAL_D("Measured range : 0x01 = 20 - 70 mA");
-                NXPLOG_NCIHAL_D("TxLDO current absolute value in uA = %d", (((400 * act->pBuff[4])) + 20000));
+                measured_val = ((0.40 * act->pBuff[4]) + 20);
+                NXPLOG_NCIHAL_D("TxLDO current absolute value in mA = %ld", measured_val);
+            }
+
+            tolerance = (phAntenna_resp.wTxdoMeasuredRangeMax  *
+                         phAntenna_resp.wTxdoMeasuredTolerance)/100;
+            if ((measured_val <= phAntenna_resp.wTxdoMeasuredRangeMax + tolerance))
+            {
+                tolerance = (phAntenna_resp.wTxdoMeasuredRangeMin *
+                             phAntenna_resp.wTxdoMeasuredTolerance)/100;
+                if((measured_val >= phAntenna_resp.wTxdoMeasuredRangeMin - tolerance))
+                {
+                    gtxldo_status = NFCSTATUS_SUCCESS;
+                    NXPLOG_NCIHAL_E("Test Antenna Response for TxLDO measurement PASS");
+                }
+                else
+                {
+                    gtxldo_status = NFCSTATUS_FAILED;
+                    NXPLOG_NCIHAL_E("Test Antenna Response for TxLDO measurement FAIL");
+                }
+            }
+            else
+            {
+                gtxldo_status = NFCSTATUS_FAILED;
+                NXPLOG_NCIHAL_E("Test Antenna Response for TxLDO measurement FAIL");
             }
         }
         else
         {
+            gtxldo_status = NFCSTATUS_FAILED;
             NXPLOG_NCIHAL_E("Test Antenna Response for TxLDO measurement failed: Invalid status");
         }
 
     }
     else
     {
+        gtxldo_status = NFCSTATUS_FAILED;
         NXPLOG_NCIHAL_E("Test Antenna Response for TxLDO measurement failed: Invalid payload length");
     }
 
@@ -539,6 +577,8 @@ static uint8_t st_validator_testAntenna_Txldo(nci_data_t *exp, phTmlNfc_Transact
 static uint8_t st_validator_testAntenna_AgcVal(nci_data_t *exp, phTmlNfc_TransactInfo_t *act)
 {
     uint8_t result = 0;
+    int agc_tolerance = 0;
+    long agc_val = 0;
 
     if(NULL == exp || NULL == act)
     {
@@ -550,16 +590,30 @@ static uint8_t st_validator_testAntenna_AgcVal(nci_data_t *exp, phTmlNfc_Transac
         if (NFCSTATUS_SUCCESS == act->pBuff[3])
         {
             result = 1;
-            NXPLOG_NCIHAL_D("AGC value : %d", ((act->pBuff[5] << 8) | (act->pBuff[4])));
+            agc_tolerance = (phAntenna_resp.wAgcValue * phAntenna_resp.wAgcValueTolerance)/100;
+            agc_val =  ((act->pBuff[5] << 8) | (act->pBuff[4]));
+            NXPLOG_NCIHAL_D("AGC value : %ld", agc_val);
+            if(((phAntenna_resp.wAgcValue - agc_tolerance) <= agc_val) &&
+               (agc_val <= (phAntenna_resp.wAgcValue + agc_tolerance)))
+            {
+                gagc_value_status = NFCSTATUS_SUCCESS;
+                NXPLOG_NCIHAL_E("Test Antenna Response for AGC Values  PASS");
+            }
+            else
+            {
+                gagc_value_status = NFCSTATUS_FAILED;
+                NXPLOG_NCIHAL_E("Test Antenna Response for AGC Values  FAIL");
+            }
         }
         else
         {
-            NXPLOG_NCIHAL_E("Test Antenna Response for AGC value failed: Invalid status");
+            gagc_value_status = NFCSTATUS_FAILED;
+            NXPLOG_NCIHAL_E("Test Antenna Response for AGC Values  FAIL");
         }
-
     }
     else
     {
+        gagc_value_status = NFCSTATUS_FAILED;
         NXPLOG_NCIHAL_E("Test Antenna Response for AGC value failed: Invalid payload length");
     }
 
@@ -578,27 +632,45 @@ static uint8_t st_validator_testAntenna_AgcVal(nci_data_t *exp, phTmlNfc_Transac
 static uint8_t st_validator_testAntenna_AgcVal_FixedNfcLd(nci_data_t *exp, phTmlNfc_TransactInfo_t *act)
 {
     uint8_t result = 0;
+    int agc_nfcld_tolerance = 0;
+    long agc_nfcld = 0;
 
     if(NULL == exp || NULL == act)
     {
         return result;
     }
 
-    if (0x05 == act->pBuff[2])
+    if(0x05 == act->pBuff[2])
     {
-        if (NFCSTATUS_SUCCESS == act->pBuff[3])
+        if(NFCSTATUS_SUCCESS == act->pBuff[3])
         {
             result = 1;
-            NXPLOG_NCIHAL_D("AGC value with fixed NFCLD : %d", ((act->pBuff[5] << 8) | (act->pBuff[4])));
+            agc_nfcld_tolerance = (phAntenna_resp.wAgcValuewithfixedNFCLD *
+                                   phAntenna_resp.wAgcValuewithfixedNFCLDTolerance)/100;
+            agc_nfcld =  ((act->pBuff[5] << 8) | (act->pBuff[4]));
+            NXPLOG_NCIHAL_D("AGC value with Fixed Nfcld  : %ld", agc_nfcld);
+
+            if(((phAntenna_resp.wAgcValuewithfixedNFCLD - agc_nfcld_tolerance) <= agc_nfcld) &&
+              (agc_nfcld <= (phAntenna_resp.wAgcValuewithfixedNFCLD + agc_nfcld_tolerance)))
+            {
+                gagc_nfcld_status = NFCSTATUS_SUCCESS;
+                NXPLOG_NCIHAL_E("Test Antenna Response for AGC value with fixed NFCLD PASS");
+            }
+            else
+            {
+                gagc_nfcld_status =  NFCSTATUS_FAILED;
+                NXPLOG_NCIHAL_E("Test Antenna Response for AGC value with fixed NFCLD FAIL");
+            }
         }
         else
         {
+            gagc_nfcld_status =  NFCSTATUS_FAILED;
             NXPLOG_NCIHAL_E("Test Antenna Response for AGC value with fixed NFCLD failed: Invalid status");
         }
-
     }
     else
     {
+        gagc_nfcld_status =  NFCSTATUS_FAILED;
         NXPLOG_NCIHAL_E("Test Antenna Response for AGC value with fixed NFCLD failed: Invalid payload length");
     }
 
@@ -617,6 +689,10 @@ static uint8_t st_validator_testAntenna_AgcVal_FixedNfcLd(nci_data_t *exp, phTml
 static uint8_t st_validator_testAntenna_AgcVal_Differential(nci_data_t *exp, phTmlNfc_TransactInfo_t *act)
 {
     uint8_t result = 0;
+    int agc_toleranceopne1 = 0;
+    int agc_toleranceopne2 = 0;
+    long agc_differentialOpne1 = 0;
+    long agc_differentialOpne2 = 0;
 
     if(NULL == exp || NULL == act)
     {
@@ -628,18 +704,40 @@ static uint8_t st_validator_testAntenna_AgcVal_Differential(nci_data_t *exp, phT
         if (NFCSTATUS_SUCCESS == act->pBuff[3])
         {
             result = 1;
-            NXPLOG_NCIHAL_D("AGC value with open RM: %d", ((act->pBuff[5] << 8) | (act->pBuff[4])));
-            NXPLOG_NCIHAL_D("AGC value with open RM: %d", ((act->pBuff[7] << 8) | (act->pBuff[6])));
+            agc_toleranceopne1=(phAntenna_resp.wAgcDifferentialWithOpen1 *
+                                phAntenna_resp.wAgcDifferentialWithOpenTolerance1)/100;
+            agc_toleranceopne2=(phAntenna_resp.wAgcDifferentialWithOpen2 *
+                                phAntenna_resp.wAgcDifferentialWithOpenTolerance2)/100;
+            agc_differentialOpne1 =  ((act->pBuff[5] << 8) | (act->pBuff[4]));
+            agc_differentialOpne2 =  ((act->pBuff[7] << 8) | (act->pBuff[6]));
+            NXPLOG_NCIHAL_D("AGC value differential Opne 1  : %ld", agc_differentialOpne1);
+            NXPLOG_NCIHAL_D("AGC value differentialOpne  2 : %ld", agc_differentialOpne2);
+
+            if(((agc_differentialOpne1 >= phAntenna_resp.wAgcDifferentialWithOpen1 - agc_toleranceopne1) &&
+               (agc_differentialOpne1 <= phAntenna_resp.wAgcDifferentialWithOpen1 + agc_toleranceopne1)) &&
+               ((agc_differentialOpne2 >= phAntenna_resp.wAgcDifferentialWithOpen2 - agc_toleranceopne2) &&
+               (agc_differentialOpne2 <= phAntenna_resp.wAgcDifferentialWithOpen2 + agc_toleranceopne2)))
+            {
+                gagc_differential_status = NFCSTATUS_SUCCESS;
+                NXPLOG_NCIHAL_E("Test Antenna Response for AGC Differential Open PASS");
+            }
+            else
+            {
+                gagc_differential_status = NFCSTATUS_FAILED;
+                NXPLOG_NCIHAL_E("Test Antenna Response for AGC Differential Open  FAIL");
+            }
         }
         else
         {
             NXPLOG_NCIHAL_E("Test Antenna Response for AGC Differential failed: Invalid status");
+            gagc_differential_status = NFCSTATUS_FAILED;
         }
 
     }
     else
     {
         NXPLOG_NCIHAL_E("Test Antenna Response for AGC Differential failed: Invalid payload length");
+        gagc_differential_status = NFCSTATUS_FAILED;
     }
 
     return result;
@@ -1577,14 +1675,15 @@ NFCSTATUS phNxpNciHal_DownloadPinTest(void)
 ** Returns          NFCSTATUS_SUCCESS if successful,otherwise NFCSTATUS_FAILED.
 **
 *******************************************************************************/
-NFCSTATUS phNxpNciHal_AntennaSelfTest(void)
+NFCSTATUS phNxpNciHal_AntennaSelfTest(phAntenna_St_Resp_t * phAntenna_St_Resp )
 {
     NFCSTATUS status = NFCSTATUS_FAILED;
+    NFCSTATUS antenna_st_status = NFCSTATUS_FAILED;
     int len = 0;
     int cnt = 0;
 
     NXPLOG_NCIHAL_D("phNxpNciHal_AntennaSelfTest - start\n");
-
+    memcpy(&phAntenna_resp, phAntenna_St_Resp, sizeof(phAntenna_St_Resp_t));
     len = (sizeof(antenna_self_test_data)/sizeof(antenna_self_test_data[0]));
 
     for(cnt = 0; cnt < len; cnt++)
@@ -1592,14 +1691,23 @@ NFCSTATUS phNxpNciHal_AntennaSelfTest(void)
         status = phNxpNciHal_performTest(&(antenna_self_test_data[cnt]));
         if(status == NFCSTATUS_RESPONSE_TIMEOUT || status == NFCSTATUS_FAILED)
         {
-            NXPLOG_NCIHAL_E("phNxpNciHal_AntennaSelfTest - FAILED\n");
+            NXPLOG_NCIHAL_E("phNxpNciHal_AntennaSelfTest: commnad execution - FAILED\n");
             break;
         }
     }
 
-    if (status == NFCSTATUS_SUCCESS)
+    if(status == NFCSTATUS_SUCCESS)
     {
-        NXPLOG_NCIHAL_D("phNxpNciHal_AntennaSelfTest - SUCESS\n");
+        if((gtxldo_status == NFCSTATUS_SUCCESS) && (gagc_value_status == NFCSTATUS_SUCCESS) &&
+           (gagc_nfcld_status == NFCSTATUS_SUCCESS) && (gagc_differential_status == NFCSTATUS_SUCCESS))
+        {
+            antenna_st_status = NFCSTATUS_SUCCESS;
+            NXPLOG_NCIHAL_D("phNxpNciHal_AntennaSelfTest - SUCESS\n");
+        }
+        else
+        {
+            NXPLOG_NCIHAL_D("phNxpNciHal_AntennaSelfTest - FAILED\n");
+        }
     }
     else
     {
@@ -1608,7 +1716,7 @@ NFCSTATUS phNxpNciHal_AntennaSelfTest(void)
 
     NXPLOG_NCIHAL_D("phNxpNciHal_AntennaSelfTest - end\n");
 
-    return status;
+    return antenna_st_status;
 }
 
 #endif /*#ifdef NXP_HW_SELF_TEST*/

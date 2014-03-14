@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ tHAL_NFC_CBACK* NfcAdaptation::mHalCallback = NULL;
 tHAL_NFC_DATA_CBACK* NfcAdaptation::mHalDataCallback = NULL;
 ThreadCondVar NfcAdaptation::mHalOpenCompletedEvent;
 ThreadCondVar NfcAdaptation::mHalCloseCompletedEvent;
+ThreadCondVar NfcAdaptation::mHalInitCompletedEvent;
 
 UINT32 ScrProtocolTraceFlag = SCR_PROTO_TRACE_ALL; //0x017F00;
 UINT8 appl_trace_level = 0xff;
@@ -537,12 +538,18 @@ void NfcAdaptation::DownloadFirmware ()
 {
     const char* func = "NfcAdaptation::DownloadFirmware";
     ALOGD ("%s: enter", func);
+    UINT8 p_core_init_rsp_params;
     HalInitialize ();
 
     mHalOpenCompletedEvent.lock ();
     ALOGD ("%s: try open HAL", func);
     HalOpen (HalDownloadFirmwareCallback, HalDownloadFirmwareDataCallback);
     mHalOpenCompletedEvent.wait ();
+
+    mHalInitCompletedEvent.lock ();
+    ALOGD ("%s: try init HAL", func);
+    HalCoreInitialized (&p_core_init_rsp_params);
+    mHalInitCompletedEvent.wait ();
 
     mHalCloseCompletedEvent.lock ();
     ALOGD ("%s: try close HAL", func);
@@ -572,6 +579,12 @@ void NfcAdaptation::HalDownloadFirmwareCallback (nfc_event_t event, nfc_status_t
         {
             ALOGD ("%s: HAL_NFC_OPEN_CPLT_EVT", func);
             mHalOpenCompletedEvent.signal ();
+            break;
+        }
+    case HAL_NFC_POST_INIT_CPLT_EVT:
+        {
+            ALOGD ("%s: HAL_NFC_POST_INIT_CPLT_EVT", func);
+            mHalInitCompletedEvent.signal ();
             break;
         }
     case HAL_NFC_CLOSE_CPLT_EVT:

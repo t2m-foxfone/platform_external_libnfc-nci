@@ -19,7 +19,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -469,6 +469,7 @@ typedef UINT8 tNCI_DISCOVERY_TYPE;
 #define NCI_ROUTE_PWR_STATE_ON          0x01        /* The device is on */
 #define NCI_ROUTE_PWR_STATE_SWITCH_OFF  0x02        /* The device is switched off */
 #define NCI_ROUTE_PWR_STATE_BATT_OFF    0x04        /* The device's battery is removed */
+#define NCI_ROUTE_PWR_STATE_SCREEN_OFF  0x80        /* The device is in screen off mode */
 
 #define NCI_NFCEE_TAG_HW_ID             0x00       /* Hardware / Registration Identification  */
 #define NCI_NFCEE_TAG_ATR_BYTES         0x01       /* ATR Bytes  */
