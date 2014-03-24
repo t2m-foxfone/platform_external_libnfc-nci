@@ -58,7 +58,7 @@
 #define CLK_SRC_PADDIRECT  3
 
 /*Extern crystal clock source*/
-#define NXP_SYS_CLK_SRC_SEL         CLK_SRC_PLL  /* Use one of CLK_SRC_<value> */
+#define NXP_SYS_CLK_SRC_SEL         CLK_SRC_XTAL  /* Use one of CLK_SRC_<value> */
 /*Direct clock*/
 
 /*
